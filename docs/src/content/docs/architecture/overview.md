@@ -1,4 +1,6 @@
-# Architecture Overview
+---
+title: Architecture Overview
+---
 
 Check-2-Check is a cross-platform Flutter application built for income-based budgeting.
 

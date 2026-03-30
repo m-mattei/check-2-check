@@ -1,4 +1,6 @@
-# Agent Rules
+---
+title: Agent Rules
+---
 
 These rules are strictly enforced for all AI agents (Antigravity/Opencode) working on the Check-2-Check repository.
 

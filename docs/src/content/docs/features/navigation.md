@@ -1,4 +1,6 @@
-# Navigation Feature Spec
+---
+title: Navigation Feature Spec
+---
 
 ## Overview
 The application uses a **MainNavigationScreen** to manage the top-level app state after the authentication phase (either via Firebase or bypass).

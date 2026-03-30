@@ -1,4 +1,6 @@
-# Authentication Feature Spec
+---
+title: Authentication Feature Spec
+---
 
 ## Overview
 Check-2-Check uses a hybrid authentication model. For development and testing, a local bypass is available. For production, **Firebase Google Sign-In** is the standard.
