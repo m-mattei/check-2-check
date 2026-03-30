@@ -43,3 +43,15 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Astro / Starlight
+**/node_modules/
+**/dist/
+.astro/
+
+# Secrets & Environment
+.env*
+*.jks
+*.p12
+*.keystore
+secrets.dart
