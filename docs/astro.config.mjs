@@ -8,9 +8,9 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: 'Check-2-Check Docs',
-			social: {
-				github: 'https://github.com/m-mattei/check-2-check',
-			},
+			social: [
+				{ icon: 'github', label: 'GitHub', href: 'https://github.com/m-mattei/check-2-check' },
+			],
 			sidebar: [
 				{
 					label: 'Guides',
