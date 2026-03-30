@@ -1,0 +1,22 @@
+schema: spec-driven
+
+context: |
+  Agent Instructions:
+  1. ALWAYS use openspec
+  2. ALWAYS document changes and organize properly
+  3. ALWAYS consider refactoring docs at scale
+  4. ALWAYS add a feature flag
+  5. ALWAYS update spec files after changes
+
+
+
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
