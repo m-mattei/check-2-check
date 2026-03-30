@@ -3,19 +3,18 @@ import starlight from '@astrojs/starlight';
 
 // https://astro.build/config
 export default defineConfig({
+	site: 'https://m-mattei.github.io',
+	base: '/check-2-check',
 	integrations: [
 		starlight({
 			title: 'Check-2-Check Docs',
 			social: {
-				github: 'https://github.com/withastro/starlight',
+				github: 'https://github.com/m-mattei/check-2-check',
 			},
 			sidebar: [
 				{
 					label: 'Guides',
-					items: [
-						// Each item here is a relative path to a docs file.
-						{ label: 'Agent Rules', slug: 'guides/agent-rules' },
-					],
+					autogenerate: { directory: 'guides' },
 				},
 				{
 					label: 'Architecture',

@@ -4,8 +4,6 @@ description: Your guide to budgeting and income-based planning.
 template: splash
 hero:
   tagline: Seamless budgeting for users living check-to-check.
-  image:
-    file: ../../../assets/houston.webp
   actions:
     - text: View Feature Specs
       link: /features/authentication/
