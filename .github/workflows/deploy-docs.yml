@@ -29,6 +29,7 @@ jobs:
       - name: Build Starlight
         run: |
           cd docs
+          npx astro sync
           npm run build
 
       - name: Deploy to GitHub Pages
