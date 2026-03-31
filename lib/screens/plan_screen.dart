@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:check_2_check/utils/feature_flags.dart';
 
@@ -88,6 +90,9 @@ class PlanScreen extends StatefulWidget {
 
 class _PlanScreenState extends State<PlanScreen> {
   _PlanView _currentView = _PlanView.paychecks;
+  bool _isPlannerMode = false;
+
+  bool get _isIOS => !kIsWeb && Platform.isIOS;
 
   final List<_MockPerson> _people = [
     const _MockPerson(id: 'p1', displayName: 'Alex', color: Colors.blue),
@@ -228,8 +233,33 @@ class _PlanScreenState extends State<PlanScreen> {
       );
     }
 
+    if (_isPlannerMode) {
+      return _buildPlannerMode();
+    }
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Plan'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('Plan'),
+        centerTitle: true,
+        actions: [
+          if (_isIOS && FeatureFlags.enableApplePencilPlanner)
+            IconButton(
+              icon: const Icon(Icons.draw),
+              onPressed: () {
+                setState(() {
+                  _isPlannerMode = true;
+                });
+              },
+              tooltip: 'Planner Mode',
+            ),
+          if (_currentView == _PlanView.categories)
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: _showAddCategoryDialog,
+              tooltip: 'Add Category',
+            ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(
@@ -262,12 +292,6 @@ class _PlanScreenState extends State<PlanScreen> {
           ),
         ],
       ),
-      floatingActionButton: _currentView == _PlanView.categories
-          ? FloatingActionButton(
-              onPressed: _showAddCategoryDialog,
-              child: const Icon(Icons.add),
-            )
-          : null,
     );
   }
 
@@ -808,4 +832,121 @@ class _PlanScreenState extends State<PlanScreen> {
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
+
+  Widget _buildPlannerMode() {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF8E1),
+      body: Stack(
+        children: [
+          CustomPaint(painter: _RuledLinesPainter(), child: Container()),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _isPlannerMode = false;
+                          });
+                        },
+                        icon: const Icon(Icons.arrow_back),
+                        label: const Text('Exit Planner Mode'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.brown.shade700,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        _formatDate(DateTime.now()),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.brown.shade800,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                  Text(
+                    'Budget Planner',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.brown.shade900,
+                      fontFamily: 'serif',
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Expanded(
+                    child: ListView(
+                      children: [
+                        _buildPlannerSection('Income'),
+                        _buildPlannerSection('Expenses'),
+                        _buildPlannerSection('Savings'),
+                        _buildPlannerSection('Notes'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlannerSection(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.brown.shade800,
+              fontFamily: 'serif',
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            height: 40,
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: Colors.brown.shade200, width: 1),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RuledLinesPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFBDBDBD).withValues(alpha: 0.3)
+      ..strokeWidth = 1;
+    const lineSpacing = 40.0;
+    for (double y = 80; y < size.height; y += lineSpacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+    final marginPaint = Paint()
+      ..color = Colors.redAccent.withValues(alpha: 0.3)
+      ..strokeWidth = 2;
+    canvas.drawLine(Offset(48, 0), Offset(48, size.height), marginPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

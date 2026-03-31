@@ -12,6 +12,7 @@ class _DevModeScreenState extends State<DevModeScreen> {
   late bool _enableUsernameOnly;
   late bool _enableMainNavigationTabs;
   late bool _enablePlanPage;
+  late bool _enableApplePencilPlanner;
 
   @override
   void initState() {
@@ -19,6 +20,7 @@ class _DevModeScreenState extends State<DevModeScreen> {
     _enableUsernameOnly = FeatureFlags.enableUsernameOnlyLogin;
     _enableMainNavigationTabs = FeatureFlags.enableMainNavigationTabs;
     _enablePlanPage = FeatureFlags.enablePlanPage;
+    _enableApplePencilPlanner = FeatureFlags.enableApplePencilPlanner;
   }
 
   Future<void> _toggleUsernameLogin(bool value) async {
@@ -39,6 +41,13 @@ class _DevModeScreenState extends State<DevModeScreen> {
     await FeatureFlags.setEnablePlanPage(value);
     setState(() {
       _enablePlanPage = value;
+    });
+  }
+
+  Future<void> _toggleApplePencilPlanner(bool value) async {
+    await FeatureFlags.setEnableApplePencilPlanner(value);
+    setState(() {
+      _enableApplePencilPlanner = value;
     });
   }
 
@@ -74,6 +83,14 @@ class _DevModeScreenState extends State<DevModeScreen> {
             ),
             value: _enablePlanPage,
             onChanged: _togglePlanPage,
+          ),
+          SwitchListTile(
+            title: const Text('Enable Apple Pencil Planner Mode'),
+            subtitle: const Text(
+              'Shows a traditional paper planner layout on iOS/iPadOS.',
+            ),
+            value: _enableApplePencilPlanner,
+            onChanged: _toggleApplePencilPlanner,
           ),
         ],
       ),

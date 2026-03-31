@@ -58,6 +58,24 @@ The system SHALL allow users to create, edit, and delete budget categories with 
 - **WHEN** the user taps edit on a custom category
 - **THEN** the system SHALL open a dialog to modify name, icon, and planned amount
 
-#### Scenario: Deleting a Category
+  #### Scenario: Deleting a Category
 - **WHEN** the user swipes to delete a custom category
 - **THEN** the system SHALL show a confirmation dialog and remove the category upon confirmation
+
+### Requirement: Apple Pencil Planner Mode
+The system SHALL provide a full-screen traditional planner layout on iOS/iPadOS for users who prefer handwriting their budget.
+
+#### Scenario: Entering Planner Mode
+- **WHEN** the user taps the planner mode toggle on an iOS device
+- **THEN** the system SHALL switch to a full-screen paper planner layout with ruled lines
+
+#### Scenario: Exiting Planner Mode
+- **WHEN** the user taps the exit button
+- **THEN** the system SHALL return to the digital Plan view
+
+### Requirement: Platform Gating
+The system SHALL only offer planner mode on iOS/iPadOS devices.
+
+#### Scenario: Non-iOS Platform
+- **WHEN** the user is on Android or Web
+- **THEN** the planner mode toggle SHALL NOT be visible
