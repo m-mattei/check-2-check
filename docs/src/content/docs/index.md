@@ -6,14 +6,14 @@ hero:
   tagline: Seamless budgeting for users living check-to-check.
   actions:
     - text: View Feature Specs
-      link: /features/authentication/
+      link: /features/authentication
       icon: right-arrow
     - text: Read the Agent Rules
-      link: /guides/agent-rules/
+      link: /guides/agent-rules
       icon: external
     - text: Settings & Theming
-      link: /features/settings-and-theming/
-      icon: paint
+      link: /features/settings-and-theming
+      icon: rocket
 ---
 
 ## Project Overview
@@ -22,6 +22,6 @@ hero:
 
 ### Quick Start
 
-1. **Architecture**: Review our [System Architecture](/architecture/overview/).
-2. **Features**: Explore current capabilities in the [Features](/features/authentication/) section.
-3. **Agent Rules**: Understand the standards for development in [Guides](/guides/agent-rules/).
+1. **Architecture**: Review our [System Architecture](/architecture/overview).
+2. **Features**: Explore current capabilities in the [Features](/features/authentication) section.
+3. **Agent Rules**: Understand the standards for development in [Guides](/guides/agent-rules).
