@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:check_2_check/screens/calendar_screen.dart';
 import 'package:check_2_check/screens/plan_screen.dart';
-import 'package:check_2_check/screens/profile_screen.dart';
+import 'package:check_2_check/screens/settings_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -16,16 +16,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Widget> _screens = [
     const CalendarScreen(),
     const PlanScreen(),
-    const ProfileScreen(),
+    const SettingsScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
@@ -38,13 +35,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             icon: Icon(Icons.calendar_month),
             label: 'Calendar',
           ),
+          BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'Plan'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt),
-            label: 'Plan',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
+            icon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
       ),

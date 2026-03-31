@@ -9,8 +9,15 @@ The application uses a **MainNavigationScreen** to manage the top-level app stat
 - **Body**: Uses an `IndexedStack` to wrap:
     - `CalendarScreen` (Index 0)
     - `PlanScreen` (Index 1)
-    - `ProfileScreen` (Index 2)
-- **Bar**: A `BottomNavigationBar` is used for mobile-first tab switching.
+    - `SettingsScreen` (Index 2)
+- **Bar**: A `BottomNavigationBar` is used for mobile-first tab switching. Tab icons and labels follow the configurable secondary color.
 
 ## Feature Flags
 - **`enableMainNavigationTabs`**: Toggles between a multi-tab layout and a direct fallback to `CalendarScreen`.
+
+## Tabs
+| Tab | Icon | Description |
+|-----|------|-------------|
+| Calendar | `Icons.calendar_month` | Budget calendar view |
+| Plan | `Icons.list_alt` | Planning view (construction) |
+| Settings | `Icons.settings` | Appearance, colors, account management |

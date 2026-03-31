@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "462993823923",
+    "project_id": "mattei-dev",
+    "storage_bucket": "mattei-dev.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:462993823923:android:3e268e21b5ec7a384db8c6",
+        "android_client_info": {
+          "package_name": "com.michaelmattei.check2check.check_2_check"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "462993823923-oacv8fklr4umgqfatgol6ufvipn0b4tq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxtkF57rv1NQwfAvbfsdW8gaamMn4CQ8o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "462993823923-29rh42k5se80agi3djq5bnhl3a5sp0dv.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "462993823923-n4n0jppog5c7oek7ca7a6se6t9s218gj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.michaelmattei.check2check.check2Check"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

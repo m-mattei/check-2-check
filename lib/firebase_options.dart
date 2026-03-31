@@ -29,38 +29,40 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'YOUR_WEB_API_KEY',
-    appId: 'YOUR_WEB_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    authDomain: 'YOUR_PROJECT_ID.firebaseapp.com',
-    storageBucket: 'YOUR_PROJECT_ID.appspot.com',
+    apiKey: 'AIzaSyDAjWf62fNArIYxI5wYqVNe-Nm8TjsjLMs',
+    appId: '1:462993823923:web:6495a3ee960d1f734db8c6',
+    messagingSenderId: '462993823923',
+    projectId: 'mattei-dev',
+    authDomain: 'mattei-dev.firebaseapp.com',
+    storageBucket: 'mattei-dev.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR_ANDROID_API_KEY',
-    appId: 'YOUR_ANDROID_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_PROJECT_ID.appspot.com',
+    apiKey: 'AIzaSyDxtkF57rv1NQwfAvbfsdW8gaamMn4CQ8o',
+    appId: '1:462993823923:android:3e268e21b5ec7a384db8c6',
+    messagingSenderId: '462993823923',
+    projectId: 'mattei-dev',
+    storageBucket: 'mattei-dev.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'YOUR_IOS_API_KEY',
-    appId: 'YOUR_IOS_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_PROJECT_ID.appspot.com',
-    iosBundleId: 'com.michaelmattei.check2check.check_2_check',
+    apiKey: 'AIzaSyBGjPDGHR05uip0L8GmHINro_waE4-7DjY',
+    appId: '1:462993823923:ios:33a387a83570b3b54db8c6',
+    messagingSenderId: '462993823923',
+    projectId: 'mattei-dev',
+    storageBucket: 'mattei-dev.firebasestorage.app',
+    iosClientId: '462993823923-n4n0jppog5c7oek7ca7a6se6t9s218gj.apps.googleusercontent.com',
+    iosBundleId: 'com.michaelmattei.check2check.check2Check',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'YOUR_MACOS_API_KEY',
-    appId: 'YOUR_MACOS_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_PROJECT_ID.appspot.com',
-    iosBundleId: 'com.michaelmattei.check2check.check_2_check',
+    apiKey: 'AIzaSyBGjPDGHR05uip0L8GmHINro_waE4-7DjY',
+    appId: '1:462993823923:ios:33a387a83570b3b54db8c6',
+    messagingSenderId: '462993823923',
+    projectId: 'mattei-dev',
+    storageBucket: 'mattei-dev.firebasestorage.app',
+    iosClientId: '462993823923-n4n0jppog5c7oek7ca7a6se6t9s218gj.apps.googleusercontent.com',
+    iosBundleId: 'com.michaelmattei.check2check.check2Check',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

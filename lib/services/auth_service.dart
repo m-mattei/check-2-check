@@ -2,29 +2,74 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+class UserProfile {
+  final String? displayName;
+  final String? email;
+  final String? photoURL;
+  final bool isFirebaseUser;
+
+  const UserProfile({
+    this.displayName,
+    this.email,
+    this.photoURL,
+    this.isFirebaseUser = false,
+  });
+}
+
 class AuthService {
-  // Singleton pattern to prevent initializing GoogleSignIn multiple times on the web
   static final AuthService _instance = AuthService._internal();
   factory AuthService() => _instance;
   AuthService._internal();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    clientId: '462993823923-tof1c5i8hhskib5frors946f4572d5h1.apps.googleusercontent.com',
+    clientId:
+        '462993823923-oacv8fklr4umgqfatgol6ufvipn0b4tq.apps.googleusercontent.com',
   );
 
   User? get currentUser => _auth.currentUser;
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
+  bool get isFirebaseUser => _auth.currentUser != null;
+
+  UserProfile getCurrentProfile() {
+    final firebaseUser = _auth.currentUser;
+    if (firebaseUser != null) {
+      return UserProfile(
+        displayName: firebaseUser.displayName,
+        email: firebaseUser.email,
+        photoURL: firebaseUser.photoURL,
+        isFirebaseUser: true,
+      );
+    }
+    return const UserProfile(
+      displayName: 'Local User',
+      email: null,
+      photoURL: null,
+      isFirebaseUser: false,
+    );
+  }
+
+  Future<UserProfile> getLocalProfile() async {
+    final username = await getLocalUsername();
+    return UserProfile(
+      displayName: username ?? 'Local User',
+      email: null,
+      photoURL: null,
+      isFirebaseUser: false,
+    );
+  }
+
   Future<User?> signInWithGoogle() async {
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn
-          .signIn()
-          .timeout(
-            const Duration(seconds: 15),
-            onTimeout: () => throw Exception('Sign-in timed out. Check your Firebase or Google Sign-In configuration.'),
-          );
+      final GoogleSignInAccount?
+      googleUser = await _googleSignIn.signIn().timeout(
+        const Duration(seconds: 15),
+        onTimeout: () => throw Exception(
+          'Sign-in timed out. Check your Firebase or Google Sign-In configuration.',
+        ),
+      );
       if (googleUser == null) return null;
 
       final GoogleSignInAuthentication googleAuth =
@@ -45,7 +90,10 @@ class AuthService {
     }
   }
 
-  Future<User?> registerWithEmailAndPassword(String email, String password) async {
+  Future<User?> registerWithEmailAndPassword(
+    String email,
+    String password,
+  ) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -75,5 +123,6 @@ class AuthService {
   Future<void> signOut() async {
     await _googleSignIn.signOut();
     await _auth.signOut();
+    await logoutLocally();
   }
 }

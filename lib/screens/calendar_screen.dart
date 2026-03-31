@@ -16,10 +16,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Budget Calendar'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Budget Calendar'), centerTitle: true),
       body: Column(
         children: [
           TableCalendar(
@@ -54,12 +51,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
               _focusedDay = focusedDay;
             },
             // Custom Styling to match Material 3 blue theme
-            calendarStyle: const CalendarStyle(
+            calendarStyle: CalendarStyle(
               todayDecoration: BoxDecoration(
-                color: Colors.blueAccent,
+                color: Colors.grey.withValues(alpha: 0.5),
                 shape: BoxShape.circle,
               ),
-              selectedDecoration: BoxDecoration(
+              selectedDecoration: const BoxDecoration(
                 color: Colors.blue,
                 shape: BoxShape.circle,
               ),

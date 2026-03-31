@@ -6,9 +6,9 @@ TBD - created by archiving change main-navigation-tabs. Update Purpose after arc
 ### Requirement: Tab-Based Root Navigation
 The system SHALL provide a bottom navigation bar for authenticated users, granting access to multiple core views of the application.
 
-#### Scenario: Switching to Profile Settings
-- **WHEN** the user is viewing the main Calendar and taps the "Profile" tab
-- **THEN** the system seamlessly swaps the view to the Profile settings, retaining the state of the background Calendar
+#### Scenario: Switching to Settings
+- **WHEN** the user is viewing the main Calendar and taps the "Settings" tab
+- **THEN** the system seamlessly swaps the view to the Settings screen, retaining the state of the background Calendar
 
 ### Requirement: Navigation Feature Flag
 The system SHALL only render the multi-tab layout if the corresponding feature flag is enabled.

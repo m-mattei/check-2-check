@@ -11,12 +11,14 @@ class DevModeScreen extends StatefulWidget {
 class _DevModeScreenState extends State<DevModeScreen> {
   late bool _enableUsernameOnly;
   late bool _enableMainNavigationTabs;
+  late bool _enablePlanPage;
 
   @override
   void initState() {
     super.initState();
     _enableUsernameOnly = FeatureFlags.enableUsernameOnlyLogin;
     _enableMainNavigationTabs = FeatureFlags.enableMainNavigationTabs;
+    _enablePlanPage = FeatureFlags.enablePlanPage;
   }
 
   Future<void> _toggleUsernameLogin(bool value) async {
@@ -33,6 +35,13 @@ class _DevModeScreenState extends State<DevModeScreen> {
     });
   }
 
+  Future<void> _togglePlanPage(bool value) async {
+    await FeatureFlags.setEnablePlanPage(value);
+    setState(() {
+      _enablePlanPage = value;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,15 +53,27 @@ class _DevModeScreenState extends State<DevModeScreen> {
         children: [
           SwitchListTile(
             title: const Text('Enable Username-Only Login Bypass'),
-            subtitle: const Text('Bypasses all Firebase auth requirements for fast development.'),
+            subtitle: const Text(
+              'Bypasses all Firebase auth requirements for fast development.',
+            ),
             value: _enableUsernameOnly,
             onChanged: _toggleUsernameLogin,
           ),
           SwitchListTile(
             title: const Text('Enable Main Navigation Tabs'),
-            subtitle: const Text('Shows the Bottom Navigation Bar and multiple tabs instead of just the Calendar screen.'),
+            subtitle: const Text(
+              'Shows the Bottom Navigation Bar and multiple tabs instead of just the Calendar screen.',
+            ),
             value: _enableMainNavigationTabs,
             onChanged: _toggleMainNavigation,
+          ),
+          SwitchListTile(
+            title: const Text('Enable Plan Page'),
+            subtitle: const Text(
+              'Shows the Plan tab in the bottom navigation bar.',
+            ),
+            value: _enablePlanPage,
+            onChanged: _togglePlanPage,
           ),
         ],
       ),

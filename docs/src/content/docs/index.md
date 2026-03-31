@@ -11,6 +11,9 @@ hero:
     - text: Read the Agent Rules
       link: /guides/agent-rules/
       icon: external
+    - text: Settings & Theming
+      link: /features/settings-and-theming/
+      icon: paint
 ---
 
 ## Project Overview

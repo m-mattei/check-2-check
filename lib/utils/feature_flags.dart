@@ -31,4 +31,14 @@ class FeatureFlags {
       await _prefs!.setBool('enableMainNavigationTabs', value);
     }
   }
+
+  static bool get enablePlanPage {
+    return _prefs?.getBool('enablePlanPage') ?? true;
+  }
+
+  static Future<void> setEnablePlanPage(bool value) async {
+    if (_prefs != null) {
+      await _prefs!.setBool('enablePlanPage', value);
+    }
+  }
 }
