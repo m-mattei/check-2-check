@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:check_2_check/firebase_options.dart';
 import 'package:check_2_check/widgets/auth_wrapper.dart';
 import 'package:check_2_check/utils/feature_flags.dart';
@@ -17,6 +18,14 @@ void main() async {
     );
   } catch (e) {
     debugPrint('Firebase Initialization failed: $e');
+  }
+
+  try {
+    FirebaseFirestore.instance.settings = const Settings(
+      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+    );
+  } catch (e) {
+    debugPrint('Firestore Initialization failed: $e');
   }
 
   runApp(const Check2CheckApp());

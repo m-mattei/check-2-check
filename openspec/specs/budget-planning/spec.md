@@ -1,7 +1,7 @@
 # budget-planning Specification
 
 ## Purpose
-Defines the Plan screen capabilities for paycheck-based budget planning with person mapping and custom categories.
+Defines the Plan screen capabilities for paycheck-based budget planning with person mapping, custom categories, and Firestore data persistence.
 
 ## Requirements
 
@@ -19,12 +19,19 @@ The system SHALL display budget categories with planned amounts, allowing users 
 - **WHEN** the user opens the Plan screen and selects the Categories view
 - **THEN** the system SHALL display a list of budget categories with names, planned amounts, and progress indicators
 
+### Requirement: Expense View
+The system SHALL display a dedicated expenses view showing all expenses with person assignments.
+
+#### Scenario: Viewing Expenses
+- **WHEN** the user opens the Plan screen and selects the Expenses view
+- **THEN** the system SHALL display a list of expense cards with name, amount, date, and assigned people
+
 ### Requirement: View Toggle
-The system SHALL provide a mechanism to switch between Paycheck and Category planning views.
+The system SHALL provide a segmented button to switch between Paychecks, Expenses, and Categories planning views.
 
 #### Scenario: Switching Views
-- **WHEN** the user taps the view toggle
-- **THEN** the system SHALL switch between the Paycheck and Category views
+- **WHEN** the user taps a segment in the view toggle
+- **THEN** the system SHALL switch between the selected view
 
 ### Requirement: Feature Flag Control
 The system SHALL only display the Plan screen content when the `enablePlanPage` feature flag is enabled.
@@ -44,7 +51,7 @@ The system SHALL allow assigning household members to paychecks and display them
 The system SHALL allow assigning household members to individual expenses and display them as visual tags.
 
 #### Scenario: Viewing Expense Assignments
-- **WHEN** a user expands a paycheck to view its expenses
+- **WHEN** a user views an expense card
 - **THEN** each expense SHALL display person tags showing who is responsible
 
 ### Requirement: Custom Categories
@@ -58,7 +65,7 @@ The system SHALL allow users to create, edit, and delete budget categories with 
 - **WHEN** the user taps edit on a custom category
 - **THEN** the system SHALL open a dialog to modify name, icon, and planned amount
 
-  #### Scenario: Deleting a Category
+#### Scenario: Deleting a Category
 - **WHEN** the user swipes to delete a custom category
 - **THEN** the system SHALL show a confirmation dialog and remove the category upon confirmation
 
@@ -79,3 +86,18 @@ The system SHALL only offer planner mode on iOS/iPadOS devices.
 #### Scenario: Non-iOS Platform
 - **WHEN** the user is on Android or Web
 - **THEN** the planner mode toggle SHALL NOT be visible
+
+### Requirement: Firestore Data Persistence
+The system SHALL store all budget data (categories, paychecks, expenses) in Firestore with real-time synchronization.
+
+#### Scenario: Data Loading
+- **WHEN** the user opens the Plan screen
+- **THEN** the system SHALL initialize Firestore connection and display a loading indicator
+
+#### Scenario: Real-time Updates
+- **WHEN** budget data changes in Firestore
+- **THEN** the system SHALL automatically update the UI via Firestore stream listeners
+
+#### Scenario: Offline Support
+- **WHEN** the device loses connectivity
+- **THEN** the system SHALL handle gracefully and sync when connectivity is restored

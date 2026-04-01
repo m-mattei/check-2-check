@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function getHouseholdId(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.householdId;
+    }
+    
+    function isInSameHousehold(householdId) {
+      return isAuthenticated() && 
+        getHouseholdId(request.auth.uid) == householdId;
+    }
+    
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
+      
+      match /households/{householdId} {
+        allow read, write: if isInSameHousehold(householdId);
+      }
+    }
+    
+    match /households/{householdId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isInSameHousehold(householdId);
+      
+      match /categories/{categoryId} {
+        allow read, write: if isInSameHousehold(householdId);
+      }
+      
+      match /people/{personId} {
+        allow read, write: if isInSameHousehold(householdId);
+      }
+      
+      match /paychecks/{paycheckId} {
+        allow read, write: if isInSameHousehold(householdId);
+      }
+      
+      match /expenses/{expenseId} {
+        allow read, write: if isInSameHousehold(householdId);
+      }
+      
+      match /goals/{goalId} {
+        allow read, write: if isInSameHousehold(householdId);
+      }
+      
+      match /notes/{noteId} {
+        allow read, write: if isInSameHousehold(householdId);
+      }
+    }
+  }
+}
