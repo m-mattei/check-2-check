@@ -51,4 +51,14 @@ class FeatureFlags {
       await _prefs!.setBool('enableApplePencilPlanner', value);
     }
   }
+
+  static bool get enableCalendarExpenses {
+    return _prefs?.getBool('enableCalendarExpenses') ?? false;
+  }
+
+  static Future<void> setEnableCalendarExpenses(bool value) async {
+    if (_prefs != null) {
+      await _prefs!.setBool('enableCalendarExpenses', value);
+    }
+  }
 }
