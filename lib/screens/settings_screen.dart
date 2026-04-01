@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:check_2_check/services/auth_service.dart';
 import 'package:check_2_check/main.dart';
 import 'package:check_2_check/widgets/auth_wrapper.dart';
+import 'package:check_2_check/screens/household_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -129,6 +130,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           _buildUserHeader(),
           const Divider(),
+          _buildHouseholdSection(),
+          const Divider(),
           _buildAppearanceSection(),
           const Divider(),
           _buildAccountSection(),
@@ -200,6 +203,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildHouseholdSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text(
+            'Household',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        ListTile(
+          leading: const Icon(Icons.people),
+          title: const Text('Manage Members'),
+          subtitle: const Text('Add or edit household members'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const HouseholdScreen()),
+            );
+          },
+        ),
+      ],
     );
   }
 
