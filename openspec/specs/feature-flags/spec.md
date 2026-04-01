@@ -18,6 +18,8 @@ The system SHALL support the following feature flags, configurable via Dev Mode:
 - `enableUsernameOnlyLogin`: Bypasses Firebase auth for local username-only login
 - `enableMainNavigationTabs`: Enables the bottom navigation bar with multiple tabs
 - `enablePlanPage`: Enables the Plan screen with paycheck-based budget planning
+- `enableApplePencilPlanner`: Enables the Apple Pencil planner mode on iOS/iPadOS
+- `enableCalendarExpenses`: Enables expense display on the calendar alongside paychecks
 
 #### Scenario: Toggling a Feature Flag
 - **WHEN** a developer toggles a feature flag in Dev Mode
