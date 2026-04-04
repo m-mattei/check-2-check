@@ -63,12 +63,32 @@ class FeatureFlags {
   }
 
   static bool get enableRecurringTransactions {
-    return _prefs?.getBool('enableRecurringTransactions') ?? false;
+    return _prefs?.getBool('enableRecurringTransactions') ?? true;
   }
 
   static Future<void> setEnableRecurringTransactions(bool value) async {
     if (_prefs != null) {
       await _prefs!.setBool('enableRecurringTransactions', value);
+    }
+  }
+
+  static bool get enablePaycheckExpensePlanning {
+    return _prefs?.getBool('enablePaycheckExpensePlanning') ?? true;
+  }
+
+  static Future<void> setEnablePaycheckExpensePlanning(bool value) async {
+    if (_prefs != null) {
+      await _prefs!.setBool('enablePaycheckExpensePlanning', value);
+    }
+  }
+
+  static bool get enablePersonCategoryBudgets {
+    return _prefs?.getBool('enablePersonCategoryBudgets') ?? true;
+  }
+
+  static Future<void> setEnablePersonCategoryBudgets(bool value) async {
+    if (_prefs != null) {
+      await _prefs!.setBool('enablePersonCategoryBudgets', value);
     }
   }
 }

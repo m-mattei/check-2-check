@@ -7,6 +7,7 @@ import 'package:check_2_check/models/category.dart' as model;
 import 'package:check_2_check/models/paycheck.dart';
 import 'package:check_2_check/models/expense.dart';
 import 'package:check_2_check/models/person.dart';
+import 'package:check_2_check/models/person_category_budget.dart';
 
 enum _PlanView { paychecks, expenses, categories }
 
@@ -174,193 +175,280 @@ class _PlanScreenState extends State<PlanScreen> {
           stream: _firestore.streamPeople(),
           builder: (context, peopleSnapshot) {
             final people = peopleSnapshot.data ?? [];
-            return ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: paychecks.length,
-              itemBuilder: (context, index) {
-                final paycheck = paychecks[index];
-                final now = DateTime.now();
-                final isPast = paycheck.date.isBefore(now);
-                final isDueSoon =
-                    !isPast &&
-                    paycheck.date.difference(now).inDays <= 3 &&
-                    paycheck.date.difference(now).inDays >= 0;
-                final assignedPeople = people
-                    .where((p) => paycheck.assignedPeopleIds.contains(p.id))
-                    .toList();
-                return Dismissible(
-                  key: ValueKey(paycheck.id),
-                  direction: DismissDirection.endToStart,
-                  background: Container(
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 16),
-                    color: Theme.of(context).colorScheme.error,
-                    child: const Icon(Icons.delete, color: Colors.white),
-                  ),
-                  confirmDismiss: (direction) =>
-                      _confirmDeletePaycheck(paycheck),
-                  onDismissed: (_) => _deletePaycheck(paycheck),
-                  child: Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+            return StreamBuilder<List<Expense>>(
+              stream: _firestore.streamExpenses(),
+              builder: (context, expenseSnapshot) {
+                final expenses = expenseSnapshot.data ?? [];
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: paychecks.length,
+                  itemBuilder: (context, index) {
+                    final paycheck = paychecks[index];
+                    final now = DateTime.now();
+                    final isPast = paycheck.date.isBefore(now);
+                    final isDueSoon =
+                        !isPast &&
+                        paycheck.date.difference(now).inDays <= 3 &&
+                        paycheck.date.difference(now).inDays >= 0;
+                    final assignedPeople = people
+                        .where((p) => paycheck.assignedPeopleIds.contains(p.id))
+                        .toList();
+                    final allocatedExpenses = expenses
+                        .where((e) => e.paycheckId == paycheck.id)
+                        .toList();
+                    final allocatedAmount = allocatedExpenses.fold<double>(
+                      0,
+                      (sum, e) => sum + e.amount,
+                    );
+                    final remaining = paycheck.amount - allocatedAmount;
+                    return Dismissible(
+                      key: ValueKey(paycheck.id),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 16),
+                        color: Theme.of(context).colorScheme.error,
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      confirmDismiss: (direction) =>
+                          _confirmDeletePaycheck(paycheck, allocatedExpenses),
+                      onDismissed: (_) =>
+                          _deletePaycheck(paycheck, allocatedExpenses),
+                      child: Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              CircleAvatar(
-                                radius: 20,
-                                backgroundColor: isPast
-                                    ? Theme.of(
-                                        context,
-                                      ).colorScheme.surfaceContainerHighest
-                                    : Theme.of(
-                                        context,
-                                      ).colorScheme.primaryContainer,
-                                child: Icon(
-                                  isPast ? Icons.check_circle : Icons.upcoming,
-                                  color: isPast
-                                      ? Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant
-                                      : Theme.of(
-                                          context,
-                                        ).colorScheme.onPrimaryContainer,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      '\$${paycheck.amount.toStringAsFixed(2)}',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                    ),
-                                    Text(
-                                      _formatDate(paycheck.date),
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.copyWith(
-                                            color: Theme.of(
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 20,
+                                    backgroundColor: isPast
+                                        ? Theme.of(
+                                            context,
+                                          ).colorScheme.surfaceContainerHighest
+                                        : Theme.of(
+                                            context,
+                                          ).colorScheme.primaryContainer,
+                                    child: Icon(
+                                      isPast
+                                          ? Icons.check_circle
+                                          : Icons.upcoming,
+                                      color: isPast
+                                          ? Theme.of(
                                               context,
-                                            ).colorScheme.onSurfaceVariant,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              if (isDueSoon)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.tertiaryContainer,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    'Due Soon',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onTertiaryContainer,
+                                            ).colorScheme.onSurfaceVariant
+                                          : Theme.of(
+                                              context,
+                                            ).colorScheme.onPrimaryContainer,
                                     ),
                                   ),
-                                ),
-                              if (paycheck.isRecurring)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          '\$${paycheck.amount.toStringAsFixed(2)}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleLarge
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                        Text(
+                                          _formatDate(paycheck.date),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.copyWith(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurfaceVariant,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primaryContainer,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.repeat,
-                                        size: 14,
+                                  if (isDueSoon)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
                                         color: Theme.of(
                                           context,
-                                        ).colorScheme.onPrimaryContainer,
+                                        ).colorScheme.tertiaryContainer,
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Recurring',
+                                      child: Text(
+                                        'Due Soon',
                                         style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
                                           color: Theme.of(
                                             context,
-                                          ).colorScheme.onPrimaryContainer,
+                                          ).colorScheme.onTertiaryContainer,
                                         ),
+                                      ),
+                                    ),
+                                  if (paycheck.isRecurring)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primaryContainer,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.repeat,
+                                            size: 14,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onPrimaryContainer,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Recurring',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onPrimaryContainer,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              if (FeatureFlags
+                                  .enablePaycheckExpensePlanning) ...[
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.surfaceContainerHighest,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Allocated',
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodyMedium,
+                                          ),
+                                          Text(
+                                            '\$${allocatedAmount.toStringAsFixed(2)}',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Remaining',
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodyMedium,
+                                          ),
+                                          Text(
+                                            '\$${remaining.toStringAsFixed(2)}',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: remaining >= 0
+                                                      ? Theme.of(
+                                                          context,
+                                                        ).colorScheme.primary
+                                                      : Theme.of(
+                                                          context,
+                                                        ).colorScheme.error,
+                                                ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
                                 ),
+                              ],
+                              if (assignedPeople.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 6,
+                                  children: assignedPeople.map((person) {
+                                    final color = person.color != null
+                                        ? Color(int.parse(person.color!))
+                                        : Theme.of(
+                                            context,
+                                          ).colorScheme.secondaryContainer;
+                                    return Chip(
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      avatar: CircleAvatar(
+                                        radius: 10,
+                                        backgroundColor: color,
+                                        child: Text(
+                                          person.firstName[0].toUpperCase(),
+                                          style: TextStyle(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSecondaryContainer,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      label: Text(
+                                        person.displayName ?? person.fullName,
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                      backgroundColor: color.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                      padding: EdgeInsets.zero,
+                                      visualDensity: VisualDensity.compact,
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
                             ],
                           ),
-                          if (assignedPeople.isNotEmpty) ...[
-                            const SizedBox(height: 12),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: assignedPeople.map((person) {
-                                final color = person.color != null
-                                    ? Color(int.parse(person.color!))
-                                    : Theme.of(
-                                        context,
-                                      ).colorScheme.secondaryContainer;
-                                return Chip(
-                                  materialTapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                  avatar: CircleAvatar(
-                                    radius: 10,
-                                    backgroundColor: color,
-                                    child: Text(
-                                      person.firstName[0].toUpperCase(),
-                                      style: TextStyle(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSecondaryContainer,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  label: Text(
-                                    person.displayName ?? person.fullName,
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                  backgroundColor: color.withValues(alpha: 0.2),
-                                  padding: EdgeInsets.zero,
-                                  visualDensity: VisualDensity.compact,
-                                );
-                              }).toList(),
-                            ),
-                          ],
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 );
               },
             );
@@ -406,100 +494,235 @@ class _PlanScreenState extends State<PlanScreen> {
           );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: categories.length,
-          itemBuilder: (context, index) {
-            final category = categories[index];
-            final progress = category.planned > 0
-                ? (category.spent / category.planned).clamp(0.0, 1.0)
-                : 0.0;
-            return Dismissible(
-              key: ValueKey(category.id),
-              direction: category.isCustom
-                  ? DismissDirection.endToStart
-                  : DismissDirection.none,
-              background: Container(
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.only(right: 16),
-                color: Theme.of(context).colorScheme.error,
-                child: const Icon(Icons.delete, color: Colors.white),
-              ),
-              confirmDismiss: (direction) => _confirmDeleteCategory(category),
-              onDismissed: (_) => _deleteCategory(category),
-              child: Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  leading: Icon(category.icon),
-                  title: Row(
-                    children: [
-                      Text(category.name),
-                      if (category.isCustom) ...[
-                        const SizedBox(width: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.secondaryContainer,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            'Custom',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSecondaryContainer,
-                              fontWeight: FontWeight.w600,
+        return StreamBuilder<List<Person>>(
+          stream: _firestore.streamPeople(),
+          builder: (context, peopleSnapshot) {
+            final people = peopleSnapshot.data ?? [];
+            return StreamBuilder<List<Expense>>(
+              stream: _firestore.streamExpenses(),
+              builder: (context, expenseSnapshot) {
+                final expenses = expenseSnapshot.data ?? [];
+                return StreamBuilder<List<PersonCategoryBudget>>(
+                  stream: _firestore.streamPersonCategoryBudgets(),
+                  builder: (context, budgetSnapshot) {
+                    final budgets = budgetSnapshot.data ?? [];
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: categories.length,
+                      itemBuilder: (context, index) {
+                        final category = categories[index];
+                        final progress = category.planned > 0
+                            ? (category.spent / category.planned).clamp(
+                                0.0,
+                                1.0,
+                              )
+                            : 0.0;
+                        return Dismissible(
+                          key: ValueKey(category.id),
+                          direction: category.isCustom
+                              ? DismissDirection.endToStart
+                              : DismissDirection.none,
+                          background: Container(
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.only(right: 16),
+                            color: Theme.of(context).colorScheme.error,
+                            child: const Icon(
+                              Icons.delete,
+                              color: Colors.white,
                             ),
                           ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 4),
-                      LinearProgressIndicator(
-                        value: progress,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            '\$${category.spent.toStringAsFixed(0)} / \$${category.planned.toStringAsFixed(0)}',
-                            style: Theme.of(context).textTheme.bodySmall,
+                          confirmDismiss: (direction) =>
+                              _confirmDeleteCategory(category),
+                          onDismissed: (_) => _deleteCategory(category),
+                          child: Card(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            child: ListTile(
+                              leading: Icon(category.icon),
+                              title: Row(
+                                children: [
+                                  Text(category.name),
+                                  if (category.isCustom) ...[
+                                    const SizedBox(width: 4),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.secondaryContainer,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        'Custom',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSecondaryContainer,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 4),
+                                  LinearProgressIndicator(
+                                    value: progress,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        '\$${category.spent.toStringAsFixed(0)} / \$${category.planned.toStringAsFixed(0)}',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall,
+                                      ),
+                                      Text(
+                                        category.remaining >= 0
+                                            ? '\$${category.remaining.toStringAsFixed(0)} left'
+                                            : '\$${category.remaining.abs().toStringAsFixed(0)} over',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: category.remaining >= 0
+                                                  ? Theme.of(
+                                                      context,
+                                                    ).colorScheme.primary
+                                                  : Theme.of(
+                                                      context,
+                                                    ).colorScheme.error,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (FeatureFlags
+                                          .enablePersonCategoryBudgets &&
+                                      people.isNotEmpty) ...[
+                                    const SizedBox(height: 8),
+                                    ...people.map((person) {
+                                      final personBudget = budgets
+                                          .where(
+                                            (b) =>
+                                                b.categoryId == category.id &&
+                                                b.personId == person.id,
+                                          )
+                                          .firstOrNull;
+                                      if (personBudget == null) {
+                                        return const SizedBox.shrink();
+                                      }
+                                      final personSpent = expenses
+                                          .where(
+                                            (e) =>
+                                                e.categoryId == category.id &&
+                                                e.assignedPeopleIds.contains(
+                                                  person.id,
+                                                ),
+                                          )
+                                          .fold<double>(
+                                            0,
+                                            (sum, e) => sum + e.amount,
+                                          );
+                                      final personRemaining =
+                                          personBudget.budgetAmount -
+                                          personSpent;
+                                      final personColor = person.color != null
+                                          ? Color(int.parse(person.color!))
+                                          : Theme.of(
+                                              context,
+                                            ).colorScheme.secondaryContainer;
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 4,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            CircleAvatar(
+                                              radius: 10,
+                                              backgroundColor: personColor,
+                                              child: Text(
+                                                person.firstName[0]
+                                                    .toUpperCase(),
+                                                style: TextStyle(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .onSecondaryContainer,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                person.displayName ??
+                                                    person.fullName,
+                                                style: Theme.of(
+                                                  context,
+                                                ).textTheme.bodySmall,
+                                              ),
+                                            ),
+                                            Text(
+                                              '\$${personSpent.toStringAsFixed(0)} / \$${personBudget.budgetAmount.toStringAsFixed(0)}',
+                                              style: Theme.of(
+                                                context,
+                                              ).textTheme.bodySmall,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              personRemaining >= 0
+                                                  ? '\$${personRemaining.toStringAsFixed(0)} left'
+                                                  : '\$${personRemaining.abs().toStringAsFixed(0)} over',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodySmall
+                                                  ?.copyWith(
+                                                    color: personRemaining >= 0
+                                                        ? Theme.of(
+                                                            context,
+                                                          ).colorScheme.primary
+                                                        : Theme.of(
+                                                            context,
+                                                          ).colorScheme.error,
+                                                    fontSize: 10,
+                                                  ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ],
+                                ],
+                              ),
+                              trailing: category.isCustom
+                                  ? IconButton(
+                                      icon: const Icon(Icons.edit),
+                                      onPressed: () => _showEditCategoryDialog(
+                                        category,
+                                        people,
+                                        budgets,
+                                        expenses,
+                                      ),
+                                    )
+                                  : null,
+                            ),
                           ),
-                          Text(
-                            category.remaining >= 0
-                                ? '\$${category.remaining.toStringAsFixed(0)} left'
-                                : '\$${category.remaining.abs().toStringAsFixed(0)} over',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: category.remaining >= 0
-                                      ? Theme.of(context).colorScheme.primary
-                                      : Theme.of(context).colorScheme.error,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  trailing: category.isCustom
-                      ? IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () => _showEditCategoryDialog(category),
-                        )
-                      : null,
-                ),
-              ),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
             );
           },
         );
@@ -633,12 +856,26 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Future<void> _showEditCategoryDialog(model.Category category) async {
+  Future<void> _showEditCategoryDialog(
+    model.Category category,
+    List<Person> people,
+    List<PersonCategoryBudget> budgets,
+    List<Expense> expenses,
+  ) async {
     final nameController = TextEditingController(text: category.name);
     final amountController = TextEditingController(
       text: category.planned.toStringAsFixed(0),
     );
     IconData selectedIcon = category.icon;
+    final personBudgetControllers = <String, TextEditingController>{};
+    for (final person in people) {
+      final budget = budgets
+          .where((b) => b.categoryId == category.id && b.personId == person.id)
+          .firstOrNull;
+      personBudgetControllers[person.id] = TextEditingController(
+        text: budget?.budgetAmount.toStringAsFixed(0) ?? '',
+      );
+    }
 
     await showModalBottomSheet(
       context: context,
@@ -651,107 +888,203 @@ class _PlanScreenState extends State<PlanScreen> {
             right: 16,
             top: 16,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Edit Category',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Category Name',
-                  border: OutlineInputBorder(),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Edit Category',
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: amountController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Planned Amount',
-                  border: OutlineInputBorder(),
-                  prefixText: '\$ ',
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Category Name',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Text('Icon', style: Theme.of(context).textTheme.labelLarge),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children:
-                    [
-                      Icons.home,
-                      Icons.shopping_cart,
-                      Icons.bolt,
-                      Icons.local_gas_station,
-                      Icons.savings,
-                      Icons.shield,
-                      Icons.movie,
-                      Icons.restaurant,
-                      Icons.local_hospital,
-                      Icons.school,
-                      Icons.fitness_center,
-                      Icons.pets,
-                      Icons.car_repair,
-                      Icons.phone_android,
-                      Icons.travel_explore,
-                      Icons.label,
-                    ].map((icon) {
-                      final isSelected = icon == selectedIcon;
-                      return GestureDetector(
-                        onTap: () {
-                          setModalState(() {
-                            selectedIcon = icon;
-                          });
-                        },
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? Theme.of(context).colorScheme.primaryContainer
+                const SizedBox(height: 16),
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Planned Amount',
+                    border: OutlineInputBorder(),
+                    prefixText: '\$ ',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text('Icon', style: Theme.of(context).textTheme.labelLarge),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children:
+                      [
+                        Icons.home,
+                        Icons.shopping_cart,
+                        Icons.bolt,
+                        Icons.local_gas_station,
+                        Icons.savings,
+                        Icons.shield,
+                        Icons.movie,
+                        Icons.restaurant,
+                        Icons.local_hospital,
+                        Icons.school,
+                        Icons.fitness_center,
+                        Icons.pets,
+                        Icons.car_repair,
+                        Icons.phone_android,
+                        Icons.travel_explore,
+                        Icons.label,
+                      ].map((icon) {
+                        final isSelected = icon == selectedIcon;
+                        return GestureDetector(
+                          onTap: () {
+                            setModalState(() {
+                              selectedIcon = icon;
+                            });
+                          },
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? Theme.of(
+                                      context,
+                                    ).colorScheme.primaryContainer
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(8),
+                              border: isSelected
+                                  ? Border.all(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                      width: 2,
+                                    )
+                                  : null,
+                            ),
+                            child: Icon(icon, size: 20),
+                          ),
+                        );
+                      }).toList(),
+                ),
+                if (FeatureFlags.enablePersonCategoryBudgets &&
+                    people.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  Text(
+                    'Person Budgets',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  ...people.map((person) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 14,
+                            backgroundColor: person.color != null
+                                ? Color(int.parse(person.color!))
                                 : Theme.of(
                                     context,
-                                  ).colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(8),
-                            border: isSelected
-                                ? Border.all(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                    width: 2,
-                                  )
-                                : null,
+                                  ).colorScheme.secondaryContainer,
+                            child: Text(
+                              person.firstName[0].toUpperCase(),
+                              style: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSecondaryContainer,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
-                          child: Icon(icon, size: 20),
-                        ),
-                      );
-                    }).toList(),
-              ),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: () async {
-                  if (nameController.text.trim().isNotEmpty &&
-                      amountController.text.isNotEmpty) {
-                    await _firestore.updateCategory(
-                      category.copyWith(
-                        name: nameController.text.trim(),
-                        icon: selectedIcon,
-                        planned: double.tryParse(amountController.text),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              person.displayName ?? person.fullName,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                          SizedBox(
+                            width: 100,
+                            child: TextField(
+                              controller: personBudgetControllers[person.id],
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                hintText: '\$0',
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 8,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     );
-                    if (mounted) Navigator.pop(context);
-                  }
-                },
-                child: const Text('Save'),
-              ),
-              const SizedBox(height: 16),
-            ],
+                  }).toList(),
+                ],
+                const SizedBox(height: 24),
+                FilledButton(
+                  onPressed: () async {
+                    if (nameController.text.trim().isNotEmpty &&
+                        amountController.text.isNotEmpty) {
+                      await _firestore.updateCategory(
+                        category.copyWith(
+                          name: nameController.text.trim(),
+                          icon: selectedIcon,
+                          planned: double.tryParse(amountController.text),
+                        ),
+                      );
+                      if (FeatureFlags.enablePersonCategoryBudgets) {
+                        for (final person in people) {
+                          final amount =
+                              double.tryParse(
+                                personBudgetControllers[person.id]?.text ?? '',
+                              ) ??
+                              0;
+                          final existing = budgets
+                              .where(
+                                (b) =>
+                                    b.categoryId == category.id &&
+                                    b.personId == person.id,
+                              )
+                              .firstOrNull;
+                          if (existing != null && amount > 0) {
+                            await _firestore.updatePersonCategoryBudget(
+                              existing.copyWith(budgetAmount: amount),
+                            );
+                          } else if (amount > 0) {
+                            await _firestore.addPersonCategoryBudget(
+                              PersonCategoryBudget(
+                                id: '',
+                                personId: person.id,
+                                categoryId: category.id,
+                                budgetAmount: amount,
+                              ),
+                            );
+                          } else if (existing != null) {
+                            await _firestore.deletePersonCategoryBudget(
+                              existing.id,
+                            );
+                          }
+                        }
+                      }
+                      if (mounted) Navigator.pop(context);
+                    }
+                  },
+                  child: const Text('Save'),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
       ),
@@ -779,6 +1112,9 @@ class _PlanScreenState extends State<PlanScreen> {
   }
 
   Future<void> _deleteCategory(model.Category category) async {
+    if (FeatureFlags.enablePersonCategoryBudgets) {
+      await _firestore.deletePersonCategoryBudgetsByCategory(category.id);
+    }
     await _firestore.deleteCategory(category.id);
   }
 
@@ -1054,13 +1390,20 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Future<bool?> _confirmDeletePaycheck(Paycheck paycheck) async {
+  Future<bool?> _confirmDeletePaycheck(
+    Paycheck paycheck, [
+    List<Expense>? allocatedExpenses,
+  ]) async {
+    final hasExpenses =
+        allocatedExpenses != null && allocatedExpenses.isNotEmpty;
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Paycheck'),
         content: Text(
-          'Are you sure you want to delete the paycheck of \$${paycheck.amount.toStringAsFixed(2)}?',
+          hasExpenses
+              ? 'This paycheck has ${allocatedExpenses.length} assigned expense(s). They will be unassigned. Continue?'
+              : 'Are you sure you want to delete the paycheck of \$${paycheck.amount.toStringAsFixed(2)}?',
         ),
         actions: [
           TextButton(
@@ -1076,7 +1419,15 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Future<void> _deletePaycheck(Paycheck paycheck) async {
+  Future<void> _deletePaycheck(
+    Paycheck paycheck, [
+    List<Expense>? allocatedExpenses,
+  ]) async {
+    if (allocatedExpenses != null && allocatedExpenses.isNotEmpty) {
+      for (final expense in allocatedExpenses) {
+        await _firestore.updateExpense(expense.copyWith(paycheckId: null));
+      }
+    }
     await _firestore.deletePaycheck(paycheck.id);
   }
 
@@ -1318,6 +1669,44 @@ class _PlanScreenState extends State<PlanScreen> {
                                   }).toList(),
                                 ),
                               ],
+                              if (expense.paycheckId != null &&
+                                  FeatureFlags
+                                      .enablePaycheckExpensePlanning) ...[
+                                const SizedBox(height: 8),
+                                StreamBuilder<List<Paycheck>>(
+                                  stream: _firestore.streamPaychecks(),
+                                  builder: (context, paycheckSnap) {
+                                    final paychecks = paycheckSnap.data ?? [];
+                                    final paycheck = paychecks
+                                        .where(
+                                          (p) => p.id == expense.paycheckId,
+                                        )
+                                        .firstOrNull;
+                                    if (paycheck == null)
+                                      return const SizedBox.shrink();
+                                    return Chip(
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      avatar: Icon(
+                                        Icons.payment,
+                                        size: 16,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onTertiaryContainer,
+                                      ),
+                                      label: Text(
+                                        '\$${paycheck.amount.toStringAsFixed(0)} - ${_formatDate(paycheck.date)}',
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                      backgroundColor: Theme.of(
+                                        context,
+                                      ).colorScheme.tertiaryContainer,
+                                      padding: EdgeInsets.zero,
+                                      visualDensity: VisualDensity.compact,
+                                    );
+                                  },
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -1339,9 +1728,11 @@ class _PlanScreenState extends State<PlanScreen> {
     final accountController = TextEditingController();
     DateTime selectedDate = DateTime.now();
     String selectedCategoryId = '';
+    String selectedPaycheckId = '';
     final selectedPeopleIds = <String>{};
     final people = await _firestore.streamPeople().first;
     final categories = await _firestore.streamCategories().first;
+    final paychecks = await _firestore.streamPaychecks().first;
     bool isRecurring = false;
     String? recurrencePattern;
     int? recurrenceDayOfWeek;
@@ -1587,6 +1978,43 @@ class _PlanScreenState extends State<PlanScreen> {
                     },
                   ),
                 ],
+                if (paychecks.isNotEmpty &&
+                    FeatureFlags.enablePaycheckExpensePlanning) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    'Assign to Paycheck (Optional)',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String?>(
+                    value: selectedPaycheckId.isEmpty
+                        ? null
+                        : selectedPaycheckId,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'Select a paycheck',
+                    ),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('None'),
+                      ),
+                      ...paychecks.map((paycheck) {
+                        return DropdownMenuItem<String?>(
+                          value: paycheck.id,
+                          child: Text(
+                            '\$${paycheck.amount.toStringAsFixed(2)} - ${_formatDate(paycheck.date)}',
+                          ),
+                        );
+                      }),
+                    ],
+                    onChanged: (value) {
+                      setModalState(() {
+                        selectedPaycheckId = value ?? '';
+                      });
+                    },
+                  ),
+                ],
                 if (people.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Text(
@@ -1641,6 +2069,9 @@ class _PlanScreenState extends State<PlanScreen> {
                               : null,
                           recurrenceEndDate: isRecurring
                               ? recurrenceEndDate
+                              : null,
+                          paycheckId: selectedPaycheckId.isNotEmpty
+                              ? selectedPaycheckId
                               : null,
                         ),
                       );

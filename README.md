@@ -6,7 +6,7 @@ A specialized Flutter application for income-based budgeting.
 
 ## Documentation Center
 We maintain a centralized knowledge base in the `docs/` folder using **Starlight**.
-- [**Go to Documentation Center**](file:///Users/michaelmattei/projects/check-2-check/docs/src/content/docs/index.md)
+- [**Go to Documentation Center**](file:///Users/michaelmattei/projects/check2check-stack/check-2-check/docs/src/content/docs/index.md)
 
 ---
 

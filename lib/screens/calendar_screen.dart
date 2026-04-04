@@ -24,6 +24,94 @@ class _CalendarScreenState extends State<CalendarScreen> {
   List<Person> _people = [];
   bool _isInitialized = false;
 
+  List<Paycheck> _generateRecurringPaycheckInstances(Paycheck paycheck) {
+    if (!paycheck.isRecurring || paycheck.recurrencePattern == null) {
+      return [paycheck];
+    }
+    final instances = <Paycheck>[];
+    final startDate = paycheck.date;
+    final endDate =
+        paycheck.recurrenceEndDate ?? startDate.add(const Duration(days: 365));
+    DateTime currentDate = startDate;
+
+    while (currentDate.isBefore(endDate) ||
+        currentDate.isAtSameMomentAs(endDate)) {
+      final instance = paycheck.copyWith(
+        id: '${paycheck.id}_${currentDate.millisecondsSinceEpoch}',
+        date: currentDate,
+      );
+      instances.add(instance);
+      currentDate = _nextDate(
+        currentDate,
+        paycheck.recurrencePattern!,
+        paycheck.recurrenceDayOfWeek,
+        paycheck.recurrenceDayOfMonth,
+      );
+      if (instances.length > 100) break;
+    }
+    return instances;
+  }
+
+  List<Expense> _generateRecurringExpenseInstances(Expense expense) {
+    if (!expense.isRecurring || expense.recurrencePattern == null) {
+      return [expense];
+    }
+    final instances = <Expense>[];
+    final startDate = expense.date;
+    final endDate =
+        expense.recurrenceEndDate ?? startDate.add(const Duration(days: 365));
+    DateTime currentDate = startDate;
+
+    while (currentDate.isBefore(endDate) ||
+        currentDate.isAtSameMomentAs(endDate)) {
+      final instance = expense.copyWith(
+        id: '${expense.id}_${currentDate.millisecondsSinceEpoch}',
+        date: currentDate,
+      );
+      instances.add(instance);
+      currentDate = _nextDate(
+        currentDate,
+        expense.recurrencePattern!,
+        expense.recurrenceDayOfWeek,
+        expense.recurrenceDayOfMonth,
+      );
+      if (instances.length > 100) break;
+    }
+    return instances;
+  }
+
+  DateTime _nextDate(
+    DateTime current,
+    String pattern,
+    int? dayOfWeek,
+    int? dayOfMonth,
+  ) {
+    switch (pattern) {
+      case 'weekly':
+        return current.add(const Duration(days: 7));
+      case 'biweekly':
+        return current.add(const Duration(days: 14));
+      case 'monthly':
+        if (dayOfMonth != null) {
+          return DateTime(current.year, current.month + 1, dayOfMonth);
+        }
+        return DateTime(current.year, current.month + 1, current.day);
+      case 'quarterly':
+        if (dayOfMonth != null) {
+          return DateTime(current.year, current.month + 3, dayOfMonth);
+        }
+        return DateTime(current.year, current.month + 3, current.day);
+      case 'annually':
+        return DateTime(
+          current.year + 1,
+          current.month,
+          dayOfMonth ?? current.day,
+        );
+      default:
+        return current.add(const Duration(days: 7));
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -42,15 +130,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
       debugPrint('Calendar: received ${paychecks.length} paychecks');
       final events = <DateTime, List<Paycheck>>{};
       for (final paycheck in paychecks) {
-        final day = DateTime.utc(
-          paycheck.date.year,
-          paycheck.date.month,
-          paycheck.date.day,
+        final recurringInstances = _generateRecurringPaycheckInstances(
+          paycheck,
         );
-        debugPrint(
-          'Calendar: paycheck on ${day.toIso8601String()} amount=${paycheck.amount}',
-        );
-        events.putIfAbsent(day, () => []).add(paycheck);
+        for (final instance in recurringInstances) {
+          final day = DateTime.utc(
+            instance.date.year,
+            instance.date.month,
+            instance.date.day,
+          );
+          debugPrint(
+            'Calendar: paycheck on ${day.toIso8601String()} amount=${instance.amount}',
+          );
+          events.putIfAbsent(day, () => []).add(instance);
+        }
       }
       if (mounted) {
         setState(() => _paycheckEvents = events);
@@ -60,15 +153,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
       debugPrint('Calendar: received ${expenses.length} expenses');
       final events = <DateTime, List<Expense>>{};
       for (final expense in expenses) {
-        final day = DateTime.utc(
-          expense.date.year,
-          expense.date.month,
-          expense.date.day,
-        );
-        debugPrint(
-          'Calendar: expense on ${day.toIso8601String()} amount=${expense.amount}',
-        );
-        events.putIfAbsent(day, () => []).add(expense);
+        final recurringInstances = _generateRecurringExpenseInstances(expense);
+        for (final instance in recurringInstances) {
+          final day = DateTime.utc(
+            instance.date.year,
+            instance.date.month,
+            instance.date.day,
+          );
+          debugPrint(
+            'Calendar: expense on ${day.toIso8601String()} amount=${instance.amount}',
+          );
+          events.putIfAbsent(day, () => []).add(instance);
+        }
       }
       if (mounted) {
         setState(() => _expenseEvents = events);

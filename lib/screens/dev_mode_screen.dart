@@ -15,6 +15,8 @@ class _DevModeScreenState extends State<DevModeScreen> {
   late bool _enableApplePencilPlanner;
   late bool _enableCalendarExpenses;
   late bool _enableRecurringTransactions;
+  late bool _enablePaycheckExpensePlanning;
+  late bool _enablePersonCategoryBudgets;
 
   @override
   void initState() {
@@ -25,6 +27,8 @@ class _DevModeScreenState extends State<DevModeScreen> {
     _enableApplePencilPlanner = FeatureFlags.enableApplePencilPlanner;
     _enableCalendarExpenses = FeatureFlags.enableCalendarExpenses;
     _enableRecurringTransactions = FeatureFlags.enableRecurringTransactions;
+    _enablePaycheckExpensePlanning = FeatureFlags.enablePaycheckExpensePlanning;
+    _enablePersonCategoryBudgets = FeatureFlags.enablePersonCategoryBudgets;
   }
 
   Future<void> _toggleUsernameLogin(bool value) async {
@@ -66,6 +70,20 @@ class _DevModeScreenState extends State<DevModeScreen> {
     await FeatureFlags.setEnableRecurringTransactions(value);
     setState(() {
       _enableRecurringTransactions = value;
+    });
+  }
+
+  Future<void> _togglePaycheckExpensePlanning(bool value) async {
+    await FeatureFlags.setEnablePaycheckExpensePlanning(value);
+    setState(() {
+      _enablePaycheckExpensePlanning = value;
+    });
+  }
+
+  Future<void> _togglePersonCategoryBudgets(bool value) async {
+    await FeatureFlags.setEnablePersonCategoryBudgets(value);
+    setState(() {
+      _enablePersonCategoryBudgets = value;
     });
   }
 
@@ -125,6 +143,22 @@ class _DevModeScreenState extends State<DevModeScreen> {
             ),
             value: _enableRecurringTransactions,
             onChanged: _toggleRecurringTransactions,
+          ),
+          SwitchListTile(
+            title: const Text('Enable Paycheck Expense Planning'),
+            subtitle: const Text(
+              'Assign expenses to specific paychecks and track allocation.',
+            ),
+            value: _enablePaycheckExpensePlanning,
+            onChanged: _togglePaycheckExpensePlanning,
+          ),
+          SwitchListTile(
+            title: const Text('Enable Person Category Budgets'),
+            subtitle: const Text(
+              'Set budget limits per person for each category.',
+            ),
+            value: _enablePersonCategoryBudgets,
+            onChanged: _togglePersonCategoryBudgets,
           ),
         ],
       ),

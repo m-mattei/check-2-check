@@ -15,6 +15,7 @@ class Expense {
   final int? recurrenceDayOfMonth;
   final DateTime? recurrenceEndDate;
   final String? parentExpenseId;
+  final String? paycheckId;
 
   const Expense({
     required this.id,
@@ -31,6 +32,7 @@ class Expense {
     this.recurrenceDayOfMonth,
     this.recurrenceEndDate,
     this.parentExpenseId,
+    this.paycheckId,
   });
 
   factory Expense.fromFirestore(String id, Map<String, dynamic> data) {
@@ -49,6 +51,7 @@ class Expense {
       recurrenceDayOfMonth: data['recurrenceDayOfMonth'],
       recurrenceEndDate: data['recurrenceEndDate']?.toDate(),
       parentExpenseId: data['parentExpenseId'],
+      paycheckId: data['paycheckId'],
     );
   }
 
@@ -70,6 +73,7 @@ class Expense {
       if (recurrenceEndDate != null)
         'recurrenceEndDate': Timestamp.fromDate(recurrenceEndDate!),
       if (parentExpenseId != null) 'parentExpenseId': parentExpenseId,
+      if (paycheckId != null) 'paycheckId': paycheckId,
     };
   }
 
@@ -88,6 +92,7 @@ class Expense {
     int? recurrenceDayOfMonth,
     DateTime? recurrenceEndDate,
     String? parentExpenseId,
+    String? paycheckId,
   }) {
     return Expense(
       id: id ?? this.id,
@@ -104,6 +109,7 @@ class Expense {
       recurrenceDayOfMonth: recurrenceDayOfMonth ?? this.recurrenceDayOfMonth,
       recurrenceEndDate: recurrenceEndDate ?? this.recurrenceEndDate,
       parentExpenseId: parentExpenseId ?? this.parentExpenseId,
+      paycheckId: paycheckId ?? this.paycheckId,
     );
   }
 }

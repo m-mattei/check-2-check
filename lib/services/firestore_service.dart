@@ -5,6 +5,7 @@ import 'package:check_2_check/models/person.dart';
 import 'package:check_2_check/models/paycheck.dart';
 import 'package:check_2_check/models/expense.dart';
 import 'package:check_2_check/models/goal.dart';
+import 'package:check_2_check/models/person_category_budget.dart';
 
 class FirestoreService {
   static final FirestoreService _instance = FirestoreService._internal();
@@ -65,6 +66,11 @@ class FirestoreService {
   CollectionReference _notes() =>
       _db.collection('households').doc(_householdId).collection('notes');
 
+  CollectionReference _personCategoryBudgets() => _db
+      .collection('households')
+      .doc(_householdId)
+      .collection('personCategoryBudgets');
+
   // --- Documents ---
 
   DocumentReference _category(String id) => _categories().doc(id);
@@ -73,6 +79,8 @@ class FirestoreService {
   DocumentReference _expense(String id) => _expenses().doc(id);
   DocumentReference _goal(String id) => _goals().doc(id);
   DocumentReference _note(String id) => _notes().doc(id);
+  DocumentReference _personCategoryBudget(String id) =>
+      _personCategoryBudgets().doc(id);
 
   // --- Streams ---
 
@@ -160,6 +168,19 @@ class FirestoreService {
     });
   }
 
+  Stream<List<PersonCategoryBudget>> streamPersonCategoryBudgets() {
+    return _personCategoryBudgets().snapshots().map((snapshot) {
+      return snapshot.docs
+          .map(
+            (doc) => PersonCategoryBudget.fromFirestore(
+              doc.id,
+              doc.data() as Map<String, dynamic>,
+            ),
+          )
+          .toList();
+    });
+  }
+
   // --- CRUD Category ---
 
   Future<void> addCategory(Category category) async {
@@ -240,4 +261,37 @@ class FirestoreService {
   }
 
   Future<void> deleteNote(String id) => _note(id).delete();
+
+  // --- CRUD PersonCategoryBudget ---
+
+  Future<void> addPersonCategoryBudget(PersonCategoryBudget budget) async {
+    final data = budget.toFirestore();
+    data['createdAt'] = FieldValue.serverTimestamp();
+    await _personCategoryBudgets().add(data);
+  }
+
+  Future<void> updatePersonCategoryBudget(PersonCategoryBudget budget) async {
+    await _personCategoryBudget(budget.id).update(budget.toFirestore());
+  }
+
+  Future<void> deletePersonCategoryBudget(String id) =>
+      _personCategoryBudget(id).delete();
+
+  Future<void> deletePersonCategoryBudgetsByPerson(String personId) async {
+    final snapshot = await _personCategoryBudgets()
+        .where('personId', isEqualTo: personId)
+        .get();
+    for (final doc in snapshot.docs) {
+      await doc.reference.delete();
+    }
+  }
+
+  Future<void> deletePersonCategoryBudgetsByCategory(String categoryId) async {
+    final snapshot = await _personCategoryBudgets()
+        .where('categoryId', isEqualTo: categoryId)
+        .get();
+    for (final doc in snapshot.docs) {
+      await doc.reference.delete();
+    }
+  }
 }
