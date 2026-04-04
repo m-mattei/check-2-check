@@ -17,6 +17,7 @@ class _DevModeScreenState extends State<DevModeScreen> {
   late bool _enableRecurringTransactions;
   late bool _enablePaycheckExpensePlanning;
   late bool _enablePersonCategoryBudgets;
+  late bool _enableSmartPlanAlerts;
 
   @override
   void initState() {
@@ -29,6 +30,7 @@ class _DevModeScreenState extends State<DevModeScreen> {
     _enableRecurringTransactions = FeatureFlags.enableRecurringTransactions;
     _enablePaycheckExpensePlanning = FeatureFlags.enablePaycheckExpensePlanning;
     _enablePersonCategoryBudgets = FeatureFlags.enablePersonCategoryBudgets;
+    _enableSmartPlanAlerts = FeatureFlags.enableSmartPlanAlerts;
   }
 
   Future<void> _toggleUsernameLogin(bool value) async {
@@ -84,6 +86,13 @@ class _DevModeScreenState extends State<DevModeScreen> {
     await FeatureFlags.setEnablePersonCategoryBudgets(value);
     setState(() {
       _enablePersonCategoryBudgets = value;
+    });
+  }
+
+  Future<void> _toggleSmartPlanAlerts(bool value) async {
+    await FeatureFlags.setEnableSmartPlanAlerts(value);
+    setState(() {
+      _enableSmartPlanAlerts = value;
     });
   }
 
@@ -159,6 +168,14 @@ class _DevModeScreenState extends State<DevModeScreen> {
             ),
             value: _enablePersonCategoryBudgets,
             onChanged: _togglePersonCategoryBudgets,
+          ),
+          SwitchListTile(
+            title: const Text('Enable Smart Plan Alerts'),
+            subtitle: const Text(
+              'Show alerts for unmapped bills, over budget, and upcoming payments.',
+            ),
+            value: _enableSmartPlanAlerts,
+            onChanged: _toggleSmartPlanAlerts,
           ),
         ],
       ),

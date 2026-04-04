@@ -13,5 +13,6 @@
 - [x] Show person-category spending in Category view
 - [x] Add feature flag for person budgets
 - [x] Handle category deletion with person budgets
+- [x] Fix remaining `_formatDate` → `formatDate` in expense_edit_dialog.dart
 - [x] Run flutter analyze and fix any issues
 - [ ] Test the feature end-to-end

@@ -91,4 +91,14 @@ class FeatureFlags {
       await _prefs!.setBool('enablePersonCategoryBudgets', value);
     }
   }
+
+  static bool get enableSmartPlanAlerts {
+    return _prefs?.getBool('enableSmartPlanAlerts') ?? true;
+  }
+
+  static Future<void> setEnableSmartPlanAlerts(bool value) async {
+    if (_prefs != null) {
+      await _prefs!.setBool('enableSmartPlanAlerts', value);
+    }
+  }
 }

@@ -105,6 +105,7 @@ class _PlanScreenState extends State<PlanScreen> {
       ),
       body: Column(
         children: [
+          if (FeatureFlags.enableSmartPlanAlerts) _buildSmartAlerts(),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: SegmentedButton<_PlanView>(
@@ -2131,6 +2132,175 @@ class _PlanScreenState extends State<PlanScreen> {
       'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
+  Widget _buildSmartAlerts() {
+    return StreamBuilder<List<Paycheck>>(
+      stream: _firestore.streamPaychecks(),
+      builder: (context, paycheckSnapshot) {
+        final paychecks = paycheckSnapshot.data ?? [];
+        return StreamBuilder<List<Expense>>(
+          stream: _firestore.streamExpenses(),
+          builder: (context, expenseSnapshot) {
+            final expenses = expenseSnapshot.data ?? [];
+            return StreamBuilder<List<model.Category>>(
+              stream: _firestore.streamCategories(),
+              builder: (context, categorySnapshot) {
+                final categories = categorySnapshot.data ?? [];
+
+                final alerts = <Widget>[];
+                final now = DateTime.now();
+
+                final unpaidBills = expenses
+                    .where((e) => e.date.isBefore(now) && e.paycheckId == null)
+                    .toList();
+                if (unpaidBills.isNotEmpty) {
+                  final totalUnpaid = unpaidBills.fold<double>(
+                    0,
+                    (sum, e) => sum + e.amount,
+                  );
+                  alerts.add(
+                    _buildAlertCard(
+                      context,
+                      icon: Icons.warning_amber,
+                      title: 'Unmapped Bills',
+                      message:
+                          '${unpaidBills.length} bill(s) totaling \$${totalUnpaid.toStringAsFixed(2)} are not mapped to a paycheck',
+                      color: Theme.of(context).colorScheme.errorContainer,
+                      textColor: Theme.of(context).colorScheme.onErrorContainer,
+                    ),
+                  );
+                }
+
+                final upcomingBills = expenses
+                    .where(
+                      (e) =>
+                          e.date.isAfter(now) &&
+                          e.date.difference(now).inDays <= 7 &&
+                          e.paycheckId == null,
+                    )
+                    .toList();
+                if (upcomingBills.isNotEmpty) {
+                  final totalUpcoming = upcomingBills.fold<double>(
+                    0,
+                    (sum, e) => sum + e.amount,
+                  );
+                  alerts.add(
+                    _buildAlertCard(
+                      context,
+                      icon: Icons.schedule,
+                      title: 'Upcoming Bills',
+                      message:
+                          '${upcomingBills.length} bill(s) totaling \$${totalUpcoming.toStringAsFixed(2)} due within 7 days need paycheck mapping',
+                      color: Theme.of(context).colorScheme.tertiaryContainer,
+                      textColor: Theme.of(
+                        context,
+                      ).colorScheme.onTertiaryContainer,
+                    ),
+                  );
+                }
+
+                for (final category in categories) {
+                  if (category.remaining < 0) {
+                    alerts.add(
+                      _buildAlertCard(
+                        context,
+                        icon: Icons.trending_up,
+                        title: 'Over Budget: ${category.name}',
+                        message:
+                            '\$${category.remaining.abs().toStringAsFixed(2)} over your \$${category.planned.toStringAsFixed(2)} budget',
+                        color: Theme.of(context).colorScheme.errorContainer,
+                        textColor: Theme.of(
+                          context,
+                        ).colorScheme.onErrorContainer,
+                      ),
+                    );
+                  }
+                }
+
+                final upcomingPaychecks = paychecks
+                    .where(
+                      (p) =>
+                          p.date.isAfter(now) &&
+                          p.date.difference(now).inDays <= 7,
+                    )
+                    .toList();
+                if (upcomingPaychecks.isNotEmpty) {
+                  final totalIncoming = upcomingPaychecks.fold<double>(
+                    0,
+                    (sum, p) => sum + p.amount,
+                  );
+                  alerts.add(
+                    _buildAlertCard(
+                      context,
+                      icon: Icons.payment,
+                      title: 'Incoming Paychecks',
+                      message:
+                          '${upcomingPaychecks.length} paycheck(s) totaling \$${totalIncoming.toStringAsFixed(2)} arriving within 7 days',
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      textColor: Theme.of(
+                        context,
+                      ).colorScheme.onPrimaryContainer,
+                    ),
+                  );
+                }
+
+                if (alerts.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+
+                return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(children: alerts),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildAlertCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String message,
+    required Color color,
+    required Color textColor,
+  }) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      color: color,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Icon(icon, color: textColor),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    message,
+                    style: TextStyle(fontSize: 12, color: textColor),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildPlannerMode() {
