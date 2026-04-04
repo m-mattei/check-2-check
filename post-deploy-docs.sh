@@ -30,7 +30,7 @@ if [ -d "$ARCH_DIR" ]; then
 fi
 
 echo "=== Checking for uncommitted changes ==="
-if git diff --stat | grep -q .; then
+if git diff --stat | grep -q . || git status --porcelain | grep -q .; then
     echo "Found changes to commit"
     DOCS_NEEDS_UPDATE=true
 fi
