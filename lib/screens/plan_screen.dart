@@ -8,6 +8,8 @@ import 'package:check_2_check/models/paycheck.dart';
 import 'package:check_2_check/models/expense.dart';
 import 'package:check_2_check/models/person.dart';
 import 'package:check_2_check/models/person_category_budget.dart';
+import 'package:check_2_check/widgets/expense_edit_dialog.dart';
+import 'package:check_2_check/widgets/paycheck_edit_dialog.dart';
 
 enum _PlanView { paychecks, expenses, categories }
 
@@ -217,20 +219,31 @@ class _PlanScreenState extends State<PlanScreen> {
                           _deletePaycheck(paycheck, allocatedExpenses),
                       child: Card(
                         margin: const EdgeInsets.only(bottom: 12),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 20,
-                                    backgroundColor: isPast
-                                        ? Theme.of(
-                                            context,
-                                          ).colorScheme.surfaceContainerHighest
-                                        : Theme.of(
+                        child: InkWell(
+                          onTap: () async {
+                            final people = await _firestore.streamPeople().first;
+                            await showEditPaycheckDialog(
+                              context,
+                              paycheck,
+                              people,
+                              _firestore,
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 20,
+                                      backgroundColor: isPast
+                                          ? Theme.of(
+                                              context,
+                                            ).colorScheme.surfaceContainerHighest
+                                          : Theme.of(
                                             context,
                                           ).colorScheme.primaryContainer,
                                     child: Icon(
@@ -1497,16 +1510,31 @@ class _PlanScreenState extends State<PlanScreen> {
                       onDismissed: (_) => _deleteExpense(expense),
                       child: Card(
                         margin: const EdgeInsets.only(bottom: 12),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 20,
-                                    backgroundColor: Theme.of(
+                        child: InkWell(
+                          onTap: () async {
+                            final people = await _firestore.streamPeople().first;
+                            final categories = await _firestore.streamCategories().first;
+                            final paychecks = await _firestore.streamPaychecks().first;
+                            await showEditExpenseDialog(
+                              context,
+                              expense,
+                              people,
+                              categories,
+                              paychecks,
+                              _firestore,
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 20,
+                                      backgroundColor: Theme.of(
                                       context,
                                     ).colorScheme.errorContainer,
                                     child: Icon(
