@@ -1,0 +1,5 @@
+name: recurring-paychecks-expenses
+description: Add support for recurring paychecks and expenses with configurable frequency patterns
+status: in_progress
+created: 2026-04-04
+owner: system

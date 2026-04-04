@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-04-04
+
+### Added
+- Recurring paychecks and expenses with configurable frequency patterns
+- Support for weekly, bi-weekly, monthly, quarterly, and annual recurrence
+- Day of week selection for weekly/bi-weekly patterns
+- Day of month selection for monthly/quarterly/annual patterns
+- Optional end date for recurring transactions
+- Visual indicators for recurring transactions with repeat icon
+- Feature flag `enableRecurringTransactions` to control visibility
+- Recurrence fields in Paycheck and Expense models
+
+### Changed
+- Updated Paycheck model with isRecurring, recurrencePattern, recurrenceDayOfWeek, recurrenceDayOfMonth, recurrenceEndDate, and parentPaycheckId fields
+- Updated Expense model with isRecurring, recurrencePattern, recurrenceDayOfWeek, recurrenceDayOfMonth, recurrenceEndDate, and parentExpenseId fields
+- Enhanced add paycheck and expense dialogs with recurring options
+
 ## [1.1.0] - 2026-03-30
 
 ### Added
