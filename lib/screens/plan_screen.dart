@@ -6,6 +6,7 @@ import 'package:check_2_check/services/firestore_service.dart';
 import 'package:check_2_check/models/category.dart' as model;
 import 'package:check_2_check/models/paycheck.dart';
 import 'package:check_2_check/models/expense.dart';
+import 'package:check_2_check/models/person.dart';
 
 enum _PlanView { paychecks, expenses, categories }
 
@@ -169,53 +170,199 @@ class _PlanScreenState extends State<PlanScreen> {
           );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: paychecks.length,
-          itemBuilder: (context, index) {
-            final paycheck = paychecks[index];
-            final isPast = paycheck.date.isBefore(DateTime.now());
-            return Dismissible(
-              key: ValueKey(paycheck.id),
-              direction: DismissDirection.endToStart,
-              background: Container(
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.only(right: 16),
-                color: Theme.of(context).colorScheme.error,
-                child: const Icon(Icons.delete, color: Colors.white),
-              ),
-              confirmDismiss: (direction) => _confirmDeletePaycheck(paycheck),
-              onDismissed: (_) => _deletePaycheck(paycheck),
-              child: Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: isPast
-                        ? Theme.of(context).colorScheme.surfaceContainerHighest
-                        : Theme.of(context).colorScheme.primaryContainer,
-                    child: Icon(
-                      isPast ? Icons.check_circle : Icons.upcoming,
-                      color: isPast
-                          ? Theme.of(context).colorScheme.onSurfaceVariant
-                          : Theme.of(context).colorScheme.onPrimaryContainer,
+        return StreamBuilder<List<Person>>(
+          stream: _firestore.streamPeople(),
+          builder: (context, peopleSnapshot) {
+            final people = peopleSnapshot.data ?? [];
+            return ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: paychecks.length,
+              itemBuilder: (context, index) {
+                final paycheck = paychecks[index];
+                final now = DateTime.now();
+                final isPast = paycheck.date.isBefore(now);
+                final isDueSoon =
+                    !isPast &&
+                    paycheck.date.difference(now).inDays <= 3 &&
+                    paycheck.date.difference(now).inDays >= 0;
+                final assignedPeople = people
+                    .where((p) => paycheck.assignedPeopleIds.contains(p.id))
+                    .toList();
+                return Dismissible(
+                  key: ValueKey(paycheck.id),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 16),
+                    color: Theme.of(context).colorScheme.error,
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  confirmDismiss: (direction) =>
+                      _confirmDeletePaycheck(paycheck),
+                  onDismissed: (_) => _deletePaycheck(paycheck),
+                  child: Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 20,
+                                backgroundColor: isPast
+                                    ? Theme.of(
+                                        context,
+                                      ).colorScheme.surfaceContainerHighest
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.primaryContainer,
+                                child: Icon(
+                                  isPast ? Icons.check_circle : Icons.upcoming,
+                                  color: isPast
+                                      ? Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant
+                                      : Theme.of(
+                                          context,
+                                        ).colorScheme.onPrimaryContainer,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '\$${paycheck.amount.toStringAsFixed(2)}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                    Text(
+                                      _formatDate(paycheck.date),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (isDueSoon)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.tertiaryContainer,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'Due Soon',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onTertiaryContainer,
+                                    ),
+                                  ),
+                                ),
+                              if (paycheck.isRecurring)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primaryContainer,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.repeat,
+                                        size: 14,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onPrimaryContainer,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Recurring',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onPrimaryContainer,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                          if (assignedPeople.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: assignedPeople.map((person) {
+                                final color = person.color != null
+                                    ? Color(int.parse(person.color!))
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.secondaryContainer;
+                                return Chip(
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  avatar: CircleAvatar(
+                                    radius: 10,
+                                    backgroundColor: color,
+                                    child: Text(
+                                      person.firstName[0].toUpperCase(),
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSecondaryContainer,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  label: Text(
+                                    person.displayName ?? person.fullName,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                  backgroundColor: color.withValues(alpha: 0.2),
+                                  padding: EdgeInsets.zero,
+                                  visualDensity: VisualDensity.compact,
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ),
-                  title: Text(
-                    '\$${paycheck.amount.toStringAsFixed(2)}',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  subtitle: Text(_formatDate(paycheck.date)),
-                  trailing: Text(
-                    _formatDate(paycheck.date),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
+                );
+              },
             );
           },
         );
@@ -640,6 +787,11 @@ class _PlanScreenState extends State<PlanScreen> {
     DateTime selectedDate = DateTime.now();
     final selectedPeopleIds = <String>{};
     final people = await _firestore.streamPeople().first;
+    bool isRecurring = false;
+    String? recurrencePattern;
+    int? recurrenceDayOfWeek;
+    int? recurrenceDayOfMonth;
+    DateTime? recurrenceEndDate;
 
     await showModalBottomSheet(
       context: context,
@@ -691,6 +843,150 @@ class _PlanScreenState extends State<PlanScreen> {
                   icon: const Icon(Icons.calendar_today),
                   label: Text(_formatDate(selectedDate)),
                 ),
+                const SizedBox(height: 16),
+                SwitchListTile(
+                  title: const Text('Recurring'),
+                  subtitle: const Text('Repeat this paycheck on a schedule'),
+                  value: isRecurring,
+                  onChanged: FeatureFlags.enableRecurringTransactions
+                      ? (value) {
+                          setModalState(() {
+                            isRecurring = value;
+                            if (!value) {
+                              recurrencePattern = null;
+                              recurrenceDayOfWeek = null;
+                              recurrenceDayOfMonth = null;
+                              recurrenceEndDate = null;
+                            }
+                          });
+                        }
+                      : null,
+                ),
+                if (isRecurring &&
+                    FeatureFlags.enableRecurringTransactions) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    'Frequency',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    value: recurrencePattern,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'Select frequency',
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'weekly', child: Text('Weekly')),
+                      DropdownMenuItem(
+                        value: 'biweekly',
+                        child: Text('Bi-weekly'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'monthly',
+                        child: Text('Monthly'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'quarterly',
+                        child: Text('Quarterly'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'annually',
+                        child: Text('Annually'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setModalState(() {
+                        recurrencePattern = value;
+                      });
+                    },
+                  ),
+                  if (recurrencePattern == 'weekly' ||
+                      recurrencePattern == 'biweekly') ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      'Day of Week',
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<int>(
+                      value: recurrenceDayOfWeek,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'Select day',
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 1, child: Text('Monday')),
+                        DropdownMenuItem(value: 2, child: Text('Tuesday')),
+                        DropdownMenuItem(value: 3, child: Text('Wednesday')),
+                        DropdownMenuItem(value: 4, child: Text('Thursday')),
+                        DropdownMenuItem(value: 5, child: Text('Friday')),
+                        DropdownMenuItem(value: 6, child: Text('Saturday')),
+                        DropdownMenuItem(value: 7, child: Text('Sunday')),
+                      ],
+                      onChanged: (value) {
+                        setModalState(() {
+                          recurrenceDayOfWeek = value;
+                        });
+                      },
+                    ),
+                  ],
+                  if (recurrencePattern == 'monthly' ||
+                      recurrencePattern == 'quarterly' ||
+                      recurrencePattern == 'annually') ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      'Day of Month',
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<int>(
+                      value: recurrenceDayOfMonth,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'Select day',
+                      ),
+                      items: List.generate(31, (i) => i + 1).map((day) {
+                        return DropdownMenuItem(
+                          value: day,
+                          child: Text('$day'),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setModalState(() {
+                          recurrenceDayOfMonth = value;
+                        });
+                      },
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  Text(
+                    'End Date (Optional)',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: recurrenceEndDate ?? selectedDate,
+                        firstDate: selectedDate,
+                        lastDate: DateTime(2030),
+                      );
+                      if (picked != null) {
+                        setModalState(() {
+                          recurrenceEndDate = picked;
+                        });
+                      }
+                    },
+                    icon: const Icon(Icons.calendar_today),
+                    label: Text(
+                      recurrenceEndDate != null
+                          ? _formatDate(recurrenceEndDate!)
+                          : 'No end date',
+                    ),
+                  ),
+                ],
                 if (people.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Text(
@@ -729,6 +1025,19 @@ class _PlanScreenState extends State<PlanScreen> {
                           amount: double.tryParse(amountController.text) ?? 0,
                           date: selectedDate,
                           assignedPeopleIds: selectedPeopleIds.toList(),
+                          isRecurring: isRecurring,
+                          recurrencePattern: isRecurring
+                              ? recurrencePattern
+                              : null,
+                          recurrenceDayOfWeek: isRecurring
+                              ? recurrenceDayOfWeek
+                              : null,
+                          recurrenceDayOfMonth: isRecurring
+                              ? recurrenceDayOfMonth
+                              : null,
+                          recurrenceEndDate: isRecurring
+                              ? recurrenceEndDate
+                              : null,
                         ),
                       );
                       if (mounted) Navigator.pop(context);
@@ -797,52 +1106,226 @@ class _PlanScreenState extends State<PlanScreen> {
           );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: expenses.length,
-          itemBuilder: (context, index) {
-            final expense = expenses[index];
-            return Dismissible(
-              key: ValueKey(expense.id),
-              direction: DismissDirection.endToStart,
-              background: Container(
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.only(right: 16),
-                color: Theme.of(context).colorScheme.error,
-                child: const Icon(Icons.delete, color: Colors.white),
-              ),
-              confirmDismiss: (direction) => _confirmDeleteExpense(expense),
-              onDismissed: (_) => _deleteExpense(expense),
-              child: Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.errorContainer,
-                    child: Icon(
-                      Icons.shopping_cart,
-                      color: Theme.of(context).colorScheme.onErrorContainer,
-                    ),
-                  ),
-                  title: Text(
-                    expense.name,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  subtitle: Text(
-                    '\$${expense.amount.toStringAsFixed(2)} - ${_formatDate(expense.date)}',
-                  ),
-                  trailing: Text(
-                    '\$${expense.amount.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
+        return StreamBuilder<List<Person>>(
+          stream: _firestore.streamPeople(),
+          builder: (context, peopleSnapshot) {
+            final people = peopleSnapshot.data ?? [];
+            return StreamBuilder<List<model.Category>>(
+              stream: _firestore.streamCategories(),
+              builder: (context, catSnapshot) {
+                final categories = catSnapshot.data ?? [];
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: expenses.length,
+                  itemBuilder: (context, index) {
+                    final expense = expenses[index];
+                    final now = DateTime.now();
+                    final isPast = expense.date.isBefore(now);
+                    final isDueSoon =
+                        !isPast &&
+                        expense.date.difference(now).inDays <= 3 &&
+                        expense.date.difference(now).inDays >= 0;
+                    final assignedPeople = people
+                        .where((p) => expense.assignedPeopleIds.contains(p.id))
+                        .toList();
+                    final category = categories
+                        .where((c) => c.id == expense.categoryId)
+                        .firstOrNull;
+                    return Dismissible(
+                      key: ValueKey(expense.id),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 16),
+                        color: Theme.of(context).colorScheme.error,
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      confirmDismiss: (direction) =>
+                          _confirmDeleteExpense(expense),
+                      onDismissed: (_) => _deleteExpense(expense),
+                      child: Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 20,
+                                    backgroundColor: Theme.of(
+                                      context,
+                                    ).colorScheme.errorContainer,
+                                    child: Icon(
+                                      Icons.shopping_cart,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onErrorContainer,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          expense.name,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleLarge
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                        Text(
+                                          '\$${expense.amount.toStringAsFixed(2)} - ${_formatDate(expense.date)}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.copyWith(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurfaceVariant,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (isDueSoon)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.tertiaryContainer,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        'Due Soon',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onTertiaryContainer,
+                                        ),
+                                      ),
+                                    ),
+                                  if (expense.isRecurring)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primaryContainer,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.repeat,
+                                            size: 14,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onPrimaryContainer,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Recurring',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onPrimaryContainer,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              if (category != null) ...[
+                                const SizedBox(height: 8),
+                                Chip(
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  avatar: Icon(
+                                    category.icon,
+                                    size: 16,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSecondaryContainer,
+                                  ),
+                                  label: Text(
+                                    category.name,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.secondaryContainer,
+                                  padding: EdgeInsets.zero,
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              ],
+                              if (assignedPeople.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 6,
+                                  children: assignedPeople.map((person) {
+                                    final color = person.color != null
+                                        ? Color(int.parse(person.color!))
+                                        : Theme.of(
+                                            context,
+                                          ).colorScheme.secondaryContainer;
+                                    return Chip(
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      avatar: CircleAvatar(
+                                        radius: 10,
+                                        backgroundColor: color,
+                                        child: Text(
+                                          person.firstName[0].toUpperCase(),
+                                          style: TextStyle(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSecondaryContainer,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      label: Text(
+                                        person.displayName ?? person.fullName,
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                      backgroundColor: color.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                      padding: EdgeInsets.zero,
+                                      visualDensity: VisualDensity.compact,
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
             );
           },
         );
@@ -859,6 +1342,11 @@ class _PlanScreenState extends State<PlanScreen> {
     final selectedPeopleIds = <String>{};
     final people = await _firestore.streamPeople().first;
     final categories = await _firestore.streamCategories().first;
+    bool isRecurring = false;
+    String? recurrencePattern;
+    int? recurrenceDayOfWeek;
+    int? recurrenceDayOfMonth;
+    DateTime? recurrenceEndDate;
 
     await showModalBottomSheet(
       context: context,
@@ -927,6 +1415,150 @@ class _PlanScreenState extends State<PlanScreen> {
                   icon: const Icon(Icons.calendar_today),
                   label: Text(_formatDate(selectedDate)),
                 ),
+                const SizedBox(height: 16),
+                SwitchListTile(
+                  title: const Text('Recurring'),
+                  subtitle: const Text('Repeat this expense on a schedule'),
+                  value: isRecurring,
+                  onChanged: FeatureFlags.enableRecurringTransactions
+                      ? (value) {
+                          setModalState(() {
+                            isRecurring = value;
+                            if (!value) {
+                              recurrencePattern = null;
+                              recurrenceDayOfWeek = null;
+                              recurrenceDayOfMonth = null;
+                              recurrenceEndDate = null;
+                            }
+                          });
+                        }
+                      : null,
+                ),
+                if (isRecurring &&
+                    FeatureFlags.enableRecurringTransactions) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    'Frequency',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    value: recurrencePattern,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'Select frequency',
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'weekly', child: Text('Weekly')),
+                      DropdownMenuItem(
+                        value: 'biweekly',
+                        child: Text('Bi-weekly'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'monthly',
+                        child: Text('Monthly'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'quarterly',
+                        child: Text('Quarterly'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'annually',
+                        child: Text('Annually'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setModalState(() {
+                        recurrencePattern = value;
+                      });
+                    },
+                  ),
+                  if (recurrencePattern == 'weekly' ||
+                      recurrencePattern == 'biweekly') ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      'Day of Week',
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<int>(
+                      value: recurrenceDayOfWeek,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'Select day',
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 1, child: Text('Monday')),
+                        DropdownMenuItem(value: 2, child: Text('Tuesday')),
+                        DropdownMenuItem(value: 3, child: Text('Wednesday')),
+                        DropdownMenuItem(value: 4, child: Text('Thursday')),
+                        DropdownMenuItem(value: 5, child: Text('Friday')),
+                        DropdownMenuItem(value: 6, child: Text('Saturday')),
+                        DropdownMenuItem(value: 7, child: Text('Sunday')),
+                      ],
+                      onChanged: (value) {
+                        setModalState(() {
+                          recurrenceDayOfWeek = value;
+                        });
+                      },
+                    ),
+                  ],
+                  if (recurrencePattern == 'monthly' ||
+                      recurrencePattern == 'quarterly' ||
+                      recurrencePattern == 'annually') ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      'Day of Month',
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<int>(
+                      value: recurrenceDayOfMonth,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'Select day',
+                      ),
+                      items: List.generate(31, (i) => i + 1).map((day) {
+                        return DropdownMenuItem(
+                          value: day,
+                          child: Text('$day'),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setModalState(() {
+                          recurrenceDayOfMonth = value;
+                        });
+                      },
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  Text(
+                    'End Date (Optional)',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: recurrenceEndDate ?? selectedDate,
+                        firstDate: selectedDate,
+                        lastDate: DateTime(2030),
+                      );
+                      if (picked != null) {
+                        setModalState(() {
+                          recurrenceEndDate = picked;
+                        });
+                      }
+                    },
+                    icon: const Icon(Icons.calendar_today),
+                    label: Text(
+                      recurrenceEndDate != null
+                          ? _formatDate(recurrenceEndDate!)
+                          : 'No end date',
+                    ),
+                  ),
+                ],
                 if (categories.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Text(
@@ -997,6 +1629,19 @@ class _PlanScreenState extends State<PlanScreen> {
                           account: accountController.text.trim(),
                           date: selectedDate,
                           assignedPeopleIds: selectedPeopleIds.toList(),
+                          isRecurring: isRecurring,
+                          recurrencePattern: isRecurring
+                              ? recurrencePattern
+                              : null,
+                          recurrenceDayOfWeek: isRecurring
+                              ? recurrenceDayOfWeek
+                              : null,
+                          recurrenceDayOfMonth: isRecurring
+                              ? recurrenceDayOfMonth
+                              : null,
+                          recurrenceEndDate: isRecurring
+                              ? recurrenceEndDate
+                              : null,
                         ),
                       );
                       if (mounted) Navigator.pop(context);

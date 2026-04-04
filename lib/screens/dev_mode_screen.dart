@@ -14,6 +14,7 @@ class _DevModeScreenState extends State<DevModeScreen> {
   late bool _enablePlanPage;
   late bool _enableApplePencilPlanner;
   late bool _enableCalendarExpenses;
+  late bool _enableRecurringTransactions;
 
   @override
   void initState() {
@@ -23,6 +24,7 @@ class _DevModeScreenState extends State<DevModeScreen> {
     _enablePlanPage = FeatureFlags.enablePlanPage;
     _enableApplePencilPlanner = FeatureFlags.enableApplePencilPlanner;
     _enableCalendarExpenses = FeatureFlags.enableCalendarExpenses;
+    _enableRecurringTransactions = FeatureFlags.enableRecurringTransactions;
   }
 
   Future<void> _toggleUsernameLogin(bool value) async {
@@ -57,6 +59,13 @@ class _DevModeScreenState extends State<DevModeScreen> {
     await FeatureFlags.setEnableCalendarExpenses(value);
     setState(() {
       _enableCalendarExpenses = value;
+    });
+  }
+
+  Future<void> _toggleRecurringTransactions(bool value) async {
+    await FeatureFlags.setEnableRecurringTransactions(value);
+    setState(() {
+      _enableRecurringTransactions = value;
     });
   }
 
@@ -108,6 +117,14 @@ class _DevModeScreenState extends State<DevModeScreen> {
             ),
             value: _enableCalendarExpenses,
             onChanged: _toggleCalendarExpenses,
+          ),
+          SwitchListTile(
+            title: const Text('Enable Recurring Transactions'),
+            subtitle: const Text(
+              'Allows setting up recurring paychecks and expenses.',
+            ),
+            value: _enableRecurringTransactions,
+            onChanged: _toggleRecurringTransactions,
           ),
         ],
       ),

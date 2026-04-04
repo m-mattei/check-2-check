@@ -61,4 +61,14 @@ class FeatureFlags {
       await _prefs!.setBool('enableCalendarExpenses', value);
     }
   }
+
+  static bool get enableRecurringTransactions {
+    return _prefs?.getBool('enableRecurringTransactions') ?? false;
+  }
+
+  static Future<void> setEnableRecurringTransactions(bool value) async {
+    if (_prefs != null) {
+      await _prefs!.setBool('enableRecurringTransactions', value);
+    }
+  }
 }
