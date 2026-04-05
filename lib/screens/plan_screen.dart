@@ -7,7 +7,16 @@ import 'package:check_2_check/models/category.dart' as model;
 import 'package:check_2_check/models/paycheck.dart';
 import 'package:check_2_check/models/expense.dart';
 
-enum _PlanView { paychecks, expenses, categories }
+enum _PlanView { all, paychecks, expenses, categories }
+
+enum _ItemType { paycheck, expense, category }
+
+class _PlannerItem {
+  final _ItemType type;
+  final DateTime date;
+  final dynamic data;
+  _PlannerItem({required this.type, required this.date, required this.data});
+}
 
 class PlanScreen extends StatefulWidget {
   const PlanScreen({super.key});
@@ -17,7 +26,7 @@ class PlanScreen extends StatefulWidget {
 }
 
 class _PlanScreenState extends State<PlanScreen> {
-  _PlanView _currentView = _PlanView.paychecks;
+  _PlanView _currentView = _PlanView.all;
   bool _isPlannerMode = false;
   final _firestore = FirestoreService();
   bool _isLoading = true;
@@ -81,23 +90,12 @@ class _PlanScreenState extends State<PlanScreen> {
               },
               tooltip: 'Planner Mode',
             ),
-          if (_currentView == _PlanView.categories)
+          if (_currentView == _PlanView.all ||
+              _currentView == _PlanView.categories)
             IconButton(
               icon: const Icon(Icons.add),
-              onPressed: _showAddCategoryDialog,
-              tooltip: 'Add Category',
-            ),
-          if (_currentView == _PlanView.paychecks)
-            IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: _showAddPaycheckDialog,
-              tooltip: 'Add Paycheck',
-            ),
-          if (_currentView == _PlanView.expenses)
-            IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: _showAddExpenseDialog,
-              tooltip: 'Add Expense',
+              onPressed: () => _showAddOptions(context, _currentView),
+              tooltip: 'Add',
             ),
         ],
       ),
@@ -106,18 +104,23 @@ class _PlanScreenState extends State<PlanScreen> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: SegmentedButton<_PlanView>(
-              segments: const [
+              segments: [
                 ButtonSegment<_PlanView>(
-                  value: _PlanView.paychecks,
-                  label: Text('Paychecks'),
-                  icon: Icon(Icons.payment),
+                  value: _PlanView.all,
+                  label: const Text('All'),
+                  icon: const Icon(Icons.list),
                 ),
                 ButtonSegment<_PlanView>(
+                  value: _PlanView.paychecks,
+                  label: const Text('Paychecks'),
+                  icon: const Icon(Icons.payment),
+                ),
+                const ButtonSegment<_PlanView>(
                   value: _PlanView.expenses,
                   label: Text('Expenses'),
                   icon: Icon(Icons.shopping_cart),
                 ),
-                ButtonSegment<_PlanView>(
+                const ButtonSegment<_PlanView>(
                   value: _PlanView.categories,
                   label: Text('Categories'),
                   icon: Icon(Icons.category),
@@ -132,13 +135,205 @@ class _PlanScreenState extends State<PlanScreen> {
             ),
           ),
           Expanded(
-            child: _currentView == _PlanView.paychecks
+            child: _currentView == _PlanView.all
+                ? _buildConsolidatedView()
+                : _currentView == _PlanView.paychecks
                 ? _buildPaycheckView()
                 : _currentView == _PlanView.expenses
                 ? _buildExpenseView()
                 : _buildCategoryView(),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showAddOptions(BuildContext context, _PlanView currentView) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (currentView == _PlanView.all ||
+                currentView == _PlanView.paychecks)
+              ListTile(
+                leading: const Icon(Icons.payment),
+                title: const Text('Add Paycheck'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showAddPaycheckDialog();
+                },
+              ),
+            if (currentView == _PlanView.all ||
+                currentView == _PlanView.expenses)
+              ListTile(
+                leading: const Icon(Icons.shopping_cart),
+                title: const Text('Add Expense'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showAddExpenseDialog();
+                },
+              ),
+            if (currentView == _PlanView.all ||
+                currentView == _PlanView.categories)
+              ListTile(
+                leading: const Icon(Icons.category),
+                title: const Text('Add Category'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showAddCategoryDialog();
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConsolidatedView() {
+    if (_householdId == null) {
+      return const Center(child: Text('Not connected to Firestore'));
+    }
+
+    return StreamBuilder<List<Paycheck>>(
+      stream: _firestore.streamPaychecks(),
+      builder: (context, paycheckSnap) {
+        return StreamBuilder<List<Expense>>(
+          stream: _firestore.streamExpenses(),
+          builder: (context, expenseSnap) {
+            return StreamBuilder<List<model.Category>>(
+              stream: _firestore.streamCategories(),
+              builder: (context, catSnap) {
+                final paychecks = paycheckSnap.data ?? [];
+                final expenses = expenseSnap.data ?? [];
+                final categories = catSnap.data ?? [];
+
+                final items = <_PlannerItem>[];
+                items.addAll(
+                  paychecks.map(
+                    (p) => _PlannerItem(
+                      type: _ItemType.paycheck,
+                      date: p.date,
+                      data: p,
+                    ),
+                  ),
+                );
+                items.addAll(
+                  expenses.map(
+                    (e) => _PlannerItem(
+                      type: _ItemType.expense,
+                      date: e.date,
+                      data: e,
+                    ),
+                  ),
+                );
+                items.addAll(
+                  categories.map(
+                    (c) => _PlannerItem(
+                      type: _ItemType.category,
+                      date: DateTime.now(),
+                      data: c,
+                    ),
+                  ),
+                );
+                items.sort((a, b) => a.date.compareTo(b.date));
+
+                if (items.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'Your planner is empty.\nTap + to add items.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: items.length,
+                  itemBuilder: (context, index) => _buildItemCard(items[index]),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildItemCard(_PlannerItem item) {
+    switch (item.type) {
+      case _ItemType.paycheck:
+        return _buildPaycheckCard(item.data as Paycheck);
+      case _ItemType.expense:
+        return _buildExpenseCard(item.data as Expense);
+      case _ItemType.category:
+        return _buildCategoryCard(item.data as model.Category);
+    }
+  }
+
+  Widget _buildPaycheckCard(Paycheck p) {
+    final now = DateTime.now();
+    final isPast = p.date.isBefore(now);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: isPast
+              ? Theme.of(context).colorScheme.surfaceContainerHighest
+              : Theme.of(context).colorScheme.primaryContainer,
+          child: Icon(
+            isPast ? Icons.check_circle : Icons.payment,
+            color: isPast
+                ? Theme.of(context).colorScheme.onSurfaceVariant
+                : Theme.of(context).colorScheme.onPrimaryContainer,
+          ),
+        ),
+        title: Text('\$${p.amount.toStringAsFixed(2)}'),
+        subtitle: Text(_formatDate(p.date)),
+      ),
+    );
+  }
+
+  Widget _buildExpenseCard(Expense e) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Theme.of(context).colorScheme.errorContainer,
+          child: Icon(
+            Icons.shopping_cart,
+            color: Theme.of(context).colorScheme.onErrorContainer,
+          ),
+        ),
+        title: Text(e.name),
+        subtitle: Text('\$${e.amount.toStringAsFixed(2)}'),
+      ),
+    );
+  }
+
+  Widget _buildCategoryCard(model.Category c) {
+    final progress = c.planned > 0
+        ? (c.spent / c.planned).clamp(0.0, 1.0)
+        : 0.0;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+          child: Icon(
+            Icons.category,
+            color: Theme.of(context).colorScheme.onSecondaryContainer,
+          ),
+        ),
+        title: Text(c.name),
+        subtitle: LinearProgressIndicator(value: progress),
+        trailing: Text(
+          '\$${c.spent.toStringAsFixed(0)}/\$${c.planned.toStringAsFixed(0)}',
+        ),
       ),
     );
   }
