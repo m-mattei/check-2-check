@@ -1,7 +1,7 @@
 # Project Instructions
 
 ## 📚 Documentation Center
-Critical project knowledge is now centralized in the **[Documentation Center](file:///Users/michaelmattei/projects/check-2-check/docs/src/content/docs/index.md)**.
+Critical project knowledge is now centralized in the **[Documentation Center](file:///Users/michaelmattei/projects/check2check-stack/check-2-check/docs/src/content/docs/index.md)**.
 All agents MUST consult the docs before proposing architectural changes.
 
 ## 🛠 Rigid Agent Rules

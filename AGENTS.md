@@ -12,7 +12,7 @@ Every code change MUST be tracked under an OpenSpec change in `openspec/changes/
 - If no: create a new change directory with `.openspec.yaml`, `proposal.md`, `design.md`, `tasks.md`, and `specs/`
 
 **During implementation:**
-- Mark tasks as complete in `tasks.md` immediately after finishing each one: `- [ ]` → `- [x]`
+- Mark tasks complete in `tasks.md` immediately after finishing each one: `- [ ]` → `- [x]`
 - Keep tasks.md in sync with actual implementation
 
 **After implementation:**
@@ -20,7 +20,25 @@ Every code change MUST be tracked under an OpenSpec change in `openspec/changes/
 - Update `docs/src/content/docs/` with the new feature or change to existing docs
 - Archive the change when fully complete: `/opsx:archive <change-name>`
 
-## 2. Documentation Sync
+## 2. Auto-Commit Changes
+
+After completing code changes, ALWAYS commit and push:
+
+```bash
+./commit-and-push.sh "Your commit message"
+```
+
+Or with custom message:
+```bash
+./commit-and-push.sh "feat: add smart plan alerts"
+```
+
+This will:
+1. Check for changes
+2. Commit all changes with the message
+3. Push to remote
+
+## 3. Documentation Sync
 
 After every change, update the docs folder:
 
@@ -29,7 +47,7 @@ After every change, update the docs folder:
 - **Architecture change**: Update `docs/src/content/docs/architecture/`
 - **Index**: Update `docs/src/content/docs/index.md` if adding a new doc page
 
-## 3. Feature Flags
+## 4. Feature Flags
 
 Every new feature MUST have a toggle in `lib/utils/feature_flags.dart` and be accessible from Dev Mode (`lib/screens/dev_mode_screen.dart`).
 

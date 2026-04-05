@@ -9,6 +9,13 @@ class Expense {
   final List<String> assignedPeopleIds;
   final DateTime date;
   final DateTime? createdAt;
+  final bool isRecurring;
+  final String? recurrencePattern;
+  final int? recurrenceDayOfWeek;
+  final int? recurrenceDayOfMonth;
+  final DateTime? recurrenceEndDate;
+  final String? parentExpenseId;
+  final String? paycheckId;
 
   const Expense({
     required this.id,
@@ -19,6 +26,13 @@ class Expense {
     required this.assignedPeopleIds,
     required this.date,
     this.createdAt,
+    this.isRecurring = false,
+    this.recurrencePattern,
+    this.recurrenceDayOfWeek,
+    this.recurrenceDayOfMonth,
+    this.recurrenceEndDate,
+    this.parentExpenseId,
+    this.paycheckId,
   });
 
   factory Expense.fromFirestore(String id, Map<String, dynamic> data) {
@@ -31,6 +45,13 @@ class Expense {
       assignedPeopleIds: List<String>.from(data['assignedPeople'] ?? []),
       date: (data['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
       createdAt: data['createdAt']?.toDate(),
+      isRecurring: data['isRecurring'] ?? false,
+      recurrencePattern: data['recurrencePattern'],
+      recurrenceDayOfWeek: data['recurrenceDayOfWeek'],
+      recurrenceDayOfMonth: data['recurrenceDayOfMonth'],
+      recurrenceEndDate: data['recurrenceEndDate']?.toDate(),
+      parentExpenseId: data['parentExpenseId'],
+      paycheckId: data['paycheckId'],
     );
   }
 
@@ -43,6 +64,16 @@ class Expense {
       'assignedPeople': assignedPeopleIds,
       'date': Timestamp.fromDate(date),
       'createdAt': createdAt,
+      if (isRecurring) 'isRecurring': isRecurring,
+      if (recurrencePattern != null) 'recurrencePattern': recurrencePattern,
+      if (recurrenceDayOfWeek != null)
+        'recurrenceDayOfWeek': recurrenceDayOfWeek,
+      if (recurrenceDayOfMonth != null)
+        'recurrenceDayOfMonth': recurrenceDayOfMonth,
+      if (recurrenceEndDate != null)
+        'recurrenceEndDate': Timestamp.fromDate(recurrenceEndDate!),
+      if (parentExpenseId != null) 'parentExpenseId': parentExpenseId,
+      if (paycheckId != null) 'paycheckId': paycheckId,
     };
   }
 
@@ -55,6 +86,13 @@ class Expense {
     List<String>? assignedPeopleIds,
     DateTime? date,
     DateTime? createdAt,
+    bool? isRecurring,
+    String? recurrencePattern,
+    int? recurrenceDayOfWeek,
+    int? recurrenceDayOfMonth,
+    DateTime? recurrenceEndDate,
+    String? parentExpenseId,
+    String? paycheckId,
   }) {
     return Expense(
       id: id ?? this.id,
@@ -65,6 +103,13 @@ class Expense {
       assignedPeopleIds: assignedPeopleIds ?? this.assignedPeopleIds,
       date: date ?? this.date,
       createdAt: createdAt ?? this.createdAt,
+      isRecurring: isRecurring ?? this.isRecurring,
+      recurrencePattern: recurrencePattern ?? this.recurrencePattern,
+      recurrenceDayOfWeek: recurrenceDayOfWeek ?? this.recurrenceDayOfWeek,
+      recurrenceDayOfMonth: recurrenceDayOfMonth ?? this.recurrenceDayOfMonth,
+      recurrenceEndDate: recurrenceEndDate ?? this.recurrenceEndDate,
+      parentExpenseId: parentExpenseId ?? this.parentExpenseId,
+      paycheckId: paycheckId ?? this.paycheckId,
     );
   }
 }

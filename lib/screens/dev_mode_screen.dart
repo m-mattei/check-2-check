@@ -14,6 +14,10 @@ class _DevModeScreenState extends State<DevModeScreen> {
   late bool _enablePlanPage;
   late bool _enableApplePencilPlanner;
   late bool _enableCalendarExpenses;
+  late bool _enableRecurringTransactions;
+  late bool _enablePaycheckExpensePlanning;
+  late bool _enablePersonCategoryBudgets;
+  late bool _enableSmartPlanAlerts;
 
   @override
   void initState() {
@@ -23,6 +27,10 @@ class _DevModeScreenState extends State<DevModeScreen> {
     _enablePlanPage = FeatureFlags.enablePlanPage;
     _enableApplePencilPlanner = FeatureFlags.enableApplePencilPlanner;
     _enableCalendarExpenses = FeatureFlags.enableCalendarExpenses;
+    _enableRecurringTransactions = FeatureFlags.enableRecurringTransactions;
+    _enablePaycheckExpensePlanning = FeatureFlags.enablePaycheckExpensePlanning;
+    _enablePersonCategoryBudgets = FeatureFlags.enablePersonCategoryBudgets;
+    _enableSmartPlanAlerts = FeatureFlags.enableSmartPlanAlerts;
   }
 
   Future<void> _toggleUsernameLogin(bool value) async {
@@ -57,6 +65,34 @@ class _DevModeScreenState extends State<DevModeScreen> {
     await FeatureFlags.setEnableCalendarExpenses(value);
     setState(() {
       _enableCalendarExpenses = value;
+    });
+  }
+
+  Future<void> _toggleRecurringTransactions(bool value) async {
+    await FeatureFlags.setEnableRecurringTransactions(value);
+    setState(() {
+      _enableRecurringTransactions = value;
+    });
+  }
+
+  Future<void> _togglePaycheckExpensePlanning(bool value) async {
+    await FeatureFlags.setEnablePaycheckExpensePlanning(value);
+    setState(() {
+      _enablePaycheckExpensePlanning = value;
+    });
+  }
+
+  Future<void> _togglePersonCategoryBudgets(bool value) async {
+    await FeatureFlags.setEnablePersonCategoryBudgets(value);
+    setState(() {
+      _enablePersonCategoryBudgets = value;
+    });
+  }
+
+  Future<void> _toggleSmartPlanAlerts(bool value) async {
+    await FeatureFlags.setEnableSmartPlanAlerts(value);
+    setState(() {
+      _enableSmartPlanAlerts = value;
     });
   }
 
@@ -108,6 +144,38 @@ class _DevModeScreenState extends State<DevModeScreen> {
             ),
             value: _enableCalendarExpenses,
             onChanged: _toggleCalendarExpenses,
+          ),
+          SwitchListTile(
+            title: const Text('Enable Recurring Transactions'),
+            subtitle: const Text(
+              'Allows setting up recurring paychecks and expenses.',
+            ),
+            value: _enableRecurringTransactions,
+            onChanged: _toggleRecurringTransactions,
+          ),
+          SwitchListTile(
+            title: const Text('Enable Paycheck Expense Planning'),
+            subtitle: const Text(
+              'Assign expenses to specific paychecks and track allocation.',
+            ),
+            value: _enablePaycheckExpensePlanning,
+            onChanged: _togglePaycheckExpensePlanning,
+          ),
+          SwitchListTile(
+            title: const Text('Enable Person Category Budgets'),
+            subtitle: const Text(
+              'Set budget limits per person for each category.',
+            ),
+            value: _enablePersonCategoryBudgets,
+            onChanged: _togglePersonCategoryBudgets,
+          ),
+          SwitchListTile(
+            title: const Text('Enable Smart Plan Alerts'),
+            subtitle: const Text(
+              'Show alerts for unmapped bills, over budget, and upcoming payments.',
+            ),
+            value: _enableSmartPlanAlerts,
+            onChanged: _toggleSmartPlanAlerts,
           ),
         ],
       ),

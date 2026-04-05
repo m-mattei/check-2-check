@@ -101,3 +101,41 @@ The system SHALL store all budget data (categories, paychecks, expenses) in Fire
 #### Scenario: Offline Support
 - **WHEN** the device loses connectivity
 - **THEN** the system SHALL handle gracefully and sync when connectivity is restored
+
+### Requirement: Recurring Transactions
+The system SHALL support creating paychecks and expenses with recurring patterns.
+
+#### Scenario: Creating Recurring Paycheck
+- **WHEN** the user creates a paycheck with "Recurring" enabled
+- **AND** selects a frequency pattern (weekly, biweekly, monthly, quarterly, annually)
+- **AND** specifies the day of week or day of month
+- **THEN** the paycheck SHALL be marked as recurring with the specified pattern
+
+#### Scenario: Creating Recurring Expense
+- **WHEN** the user creates an expense with "Recurring" enabled
+- **AND** selects a frequency pattern
+- **AND** specifies the day of week or day of month
+- **THEN** the expense SHALL be marked as recurring with the specified pattern
+
+#### Scenario: Viewing Recurring Transactions
+- **WHEN** the user views paychecks or expenses with recurring enabled
+- **THEN** the transaction SHALL display a "Recurring" badge with repeat icon
+
+#### Scenario: Recurring Option Visibility
+- **WHEN** the `enableRecurringTransactions` feature flag is disabled
+- **THEN** the recurring options SHALL NOT be visible in add/edit dialogs
+
+### Requirement: Recurrence Pattern Selection
+The system SHALL provide appropriate day selectors based on the selected frequency.
+
+#### Scenario: Weekly/Biweekly Frequency
+- **WHEN** the user selects "Weekly" or "Biweekly" recurrence
+- **THEN** the system SHALL display a day-of-week selector (Mon-Sun)
+
+#### Scenario: Monthly/Quarterly/Annual Frequency
+- **WHEN** the user selects "Monthly", "Quarterly", or "Annual" recurrence
+- **THEN** the system SHALL display a day-of-month selector (1-31)
+
+#### Scenario: Optional End Date
+- **WHEN** the user enables recurring transactions
+- **THEN** the system SHALL optionally allow specifying an end date

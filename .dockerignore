@@ -1,0 +1,14 @@
+build/
+.dart_tool/
+.packages
+*.iml
+.idea/
+.vscode/
+android/
+ios/
+macos/
+linux/
+windows/
+docs/
+scripts/
+test/

@@ -1,0 +1,5 @@
+name: Paycheck Expense Planning
+description: Allow users to assign expenses to specific paychecks and track budget allocation per paycheck
+status: in_progress
+created: 2026-04-04
+capability: budget-planning
